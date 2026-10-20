@@ -40,8 +40,18 @@ SEPARATORS = ",."  # Plotly layout.separators: decimal comma, dot thousands sepa
 
 
 def fmt(x, spec=".3f"):
-    """Indonesian number format: decimal comma, dot thousands separator."""
-    return id_format(x, spec)
+    """Indonesian number format: decimal comma, dot thousands separator; NaN as a dash."""
+    return "–" if x is None or (isinstance(x, float) and x != x) else id_format(x, spec)
+
+
+def styled(df, formats):
+    """Table with Indonesian number formats per column (formats: column -> format spec), right-aligned."""
+    return df.style.format({c: (lambda v, s=spec: fmt(v, s)) for c, spec in formats.items() if c in df})
+
+
+def rows_height(n_rows):
+    """st.dataframe height that shows every row without an inner scrollbar."""
+    return 38 + 35 * n_rows
 
 
 @st.cache_resource

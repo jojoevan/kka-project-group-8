@@ -1,0 +1,12 @@
+# Tampilan aplikasi Streamlit (app/main.py).
+[theme]
+base = "light"
+primaryColor = "#b7412e"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f4f5f7"
+textColor = "#1f2933"
+font = "sans serif"
+baseRadius = "0.5rem"
+
+[client]
+toolbarMode = "minimal"

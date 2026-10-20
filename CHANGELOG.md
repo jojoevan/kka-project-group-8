@@ -62,9 +62,13 @@ Catatan keputusan pemodelan yang **direvisi** dari rencana awal (PLAN) atau dari
 - **Sekarang**: instance besar (k ∈ {50, 100, 200}) dibangun dari Klaster hotspot NASA FIRMS VIIRS (#6). Generator sintetis tidak dibangun.
 - **Alasan**: semua instance tetap berasal dari data nyata, waktunya selaras dengan snapshot operasional 2026-10-19, dan jarak antar-node masuk akal untuk helikopter. Lihat `docs/adr/0001-firms-clusters-instead-of-synthetic.md`.
 
-<!-- FIRMS: isi setelah #6 -->
+Keputusan FIRMS yang ditetapkan atau direvisi saat implementasi #6:
 
-_(Catat di sini keputusan FIRMS yang direvisi saat implementasi #6, misalnya tanggal snapshot, perubahan filter, atau nilai Batas waktu misi FIRMS hasil kalibrasi.)_
+- **Snapshot**: feed publik VIIRS S-NPP 7 hari Asia Tenggara, diunduh 2026-10-20 06:30 UTC, disimpan apa adanya di `data/external/firms/` (dengan SHA-256 di `.source.txt`). Pipeline hanya membaca file ini.
+- **Filter**: confidence nominal/high dan dua bounding box kasar (Sumatra, Kalimantan) di `config.yaml: firms.bboxes`. Kotak ini ikut memuat sekitar 260 hotspot di Malaysia (perkiraan di `.source.txt`). Kotak tidak diubah, karena parameter FIRMS ditetapkan sebelum melihat hasil (`config.yaml: firms`).
+- **Batas waktu misi FIRMS**: kalibrasi dengan utilitas yang sama seperti instance provinsi, sekali pada k=100, lalu dipakai untuk semua k. Tidak ada kandidat yang masuk target 40–60%: 72 jam memberi 39% dan 120 jam memberi 73% klaster terkunjungi. Yang dipilih adalah kandidat terdekat, **72 jam** (`results/tables/firms_calibration.md`). Akibatnya, fraksi terkunjungi Greedy 72% pada k=50 dan 22,5% pada k=200 (`results/tables/firms_instances.md`).
+- **Node klaster lintas wilayah**: jika pusat sebuah klaster jatuh di luar kotak (klaster yang berisi hotspot dari dua wilayah), node ditempatkan di hotspot anggota yang paling dekat ke pusat.
+- **Istilah**: Risiko node FIRMS disebut **Risiko klaster** (`GLOSSARY.md`), karena dinormalisasi per instance dan tidak sebanding dengan Risiko provinsi.
 
 ## 11. Dokumentasi berbahasa Indonesia (#1, #7)
 
@@ -74,5 +78,11 @@ _(Catat di sini keputusan FIRMS yang direvisi saat implementasi #6, misalnya tan
 
 ## 12. Angka dokumentasi diambil dari hasil tersimpan (#7)
 
-- **Sekarang**: tabel provenance, ringkasan hasil di README, tabel diagnostik algoritma, dan daftar gambar diisi oleh `python -m src.docs_gen` dari `config.yaml` dan `results/`. Tes `tests/test_docs_gen.py` gagal jika dokumen tidak lagi cocok dengan hasil tersimpan.
+- **Sekarang**: tabel provenance (provinsi dan FIRMS), ringkasan hasil di README (provinsi dan FIRMS), tabel diagnostik algoritma, tabel biaya HC FIRMS, dan daftar gambar diisi oleh `python -m src.docs_gen` dari `config.yaml` dan `results/`. Tes `tests/test_docs_gen.py` gagal jika dokumen tidak lagi cocok dengan hasil tersimpan.
 - **Alasan**: angka di dokumen tidak boleh ditulis ulang manual tanpa sumber.
+
+## 13. Perbaikan hasil review spec #1
+
+- **Suhu SA dicatat**: `results/raw/runs.csv` dan `results/raw/firms_runs.csv` kini memuat `sa_t0`, `sa_cooling`, dan `sa_final_temperature` di samping `sa_acceptance_rate`, sesuai spec ("suhu dan acceptance rate dicatat"). Kolom `hc_steps` juga kini ada di runs provinsi. Fitness semua run identik dengan hasil sebelumnya (dicek ulang setelah eksperimen penuh dijalankan lagi).
+- **Peringkat sadar-seri**: `results/tables/firms_ranking.md` menulis rata-rata yang sama (toleransi relatif 1e-9) sebagai seri, misalnya "GA = Greedy = HC = SA" pada provinsi 2019 n=6. Sebelumnya, seri diurutkan menurut urutan input.
+- **Exact**: batas "maks. 9 node" kini ditulis eksplisit termasuk Depot (n mencakup Depot).

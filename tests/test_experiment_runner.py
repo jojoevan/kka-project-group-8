@@ -43,6 +43,19 @@ def test_one_row_per_run(out, quick):
     assert (heur.evals_to_95 <= heur.evals).all() and (heur.evals_to_95 >= 1).all()
 
 
+def _assert_sa_temperature_recorded(runs):
+    """Spec #1/#3: SA temperature is recorded; cooling is set so T_end ~= 0.001 * T0 at budget end."""
+    sa = runs[runs.algorithm == "SA"]
+    for col in ("sa_t0", "sa_cooling", "sa_final_temperature", "sa_acceptance_rate"):
+        assert sa[col].notna().all() and runs[runs.algorithm != "SA"][col].isna().all()
+    assert (sa.sa_t0 > 0).all() and sa.sa_cooling.between(0, 1, inclusive="neither").all()
+    assert sa.sa_final_temperature.to_numpy() == pytest.approx(1e-3 * sa.sa_t0.to_numpy(), rel=.05)
+
+
+def test_sa_temperature_is_recorded_per_run(out):
+    _assert_sa_temperature_recorded(pd.read_csv(out / "raw" / "runs.csv"))
+
+
 def test_convergence_histories_saved_for_every_run(out):
     runs = pd.read_csv(out / "raw" / "runs.csv")
     with gzip.open(out / "raw" / "histories.jsonl.gz", "rt", encoding="utf8") as fh:
@@ -297,6 +310,7 @@ def test_firms_runs_every_k_seed_and_heuristic(firms_out, cfg):
     assert set(runs.k) == set(q["sizes"]) and (runs.n == runs.k + 1).all()
     assert set(runs.algorithm) == set(HEURISTICS) and (runs.evals <= q["budget"]).all()
     assert (runs.mission_time_h <= runs.time_limit_h + 1e-9).all()
+    _assert_sa_temperature_recorded(runs)
     inst = pd.read_csv(firms_out / "tables" / "firms_instances.csv")
     assert set(inst.k) == set(q["sizes"]) and inst.time_limit_h.nunique() == 1
     assert {"hotspots", "time_limit_h", "greedy_visited"} <= set(inst.columns)
@@ -325,3 +339,47 @@ def test_combined_scalability_and_cluster_map(firms_out, cfg):
     assert best["k"] == k and len(best["route"]) + len(best["skipped"]) == k
     nodes = pd.read_csv(firms_out / "tables" / f"firms_clusters_k{k}.csv")
     assert len(nodes) == k and nodes.risk.between(0, 1).all()
+
+
+def _means(rows):
+    return pd.DataFrame([{"scenario": sc, "n": n, "algorithm": a, "mean": m} for sc, n, a, m in rows])
+
+
+def _no_sig(summary):
+    pairs = [(sc, n, a, b) for (sc, n), g in summary.groupby(["scenario", "n"]) for a in g.algorithm
+             for b in g.algorithm if a < b]
+    return pd.DataFrame([{"scenario": sc, "n": n, "algorithm_a": a, "algorithm_b": b, "significant_0.05": False}
+                         for sc, n, a, b in pairs])
+
+
+def test_ranking_renders_equal_means_as_ties():
+    from src.experiments.firms_phase import ranking_report
+    prov = _means([("2026", 38, "SA", 9.1), ("2026", 38, "HC", 8.7), ("2026", 38, "Greedy", 8.69),
+                   ("2026", 38, "GA", 7.2),
+                   ("2019", 6, "GA", 4.101), ("2019", 6, "Greedy", 4.101 * (1 + 1e-12)),
+                   ("2019", 6, "HC", 4.101), ("2019", 6, "SA", 4.101)])
+    firms = _means([("FIRMS", 51, "SA", 22.4), ("FIRMS", 51, "HC", 19.7), ("FIRMS", 51, "Greedy", 19.7),
+                    ("FIRMS", 51, "GA", 18.6)])
+    md, table = ranking_report(prov, _no_sig(prov), firms, _no_sig(firms), [50])
+    order = dict(zip(table.instance, table.iloc[:, 1]))
+    assert order["provinsi 2019, n=6"] == "GA = Greedy = HC = SA"
+    assert order["provinsi 2026, n=38"] == "SA > HC > Greedy > GA"
+    assert order["FIRMS k=50 (n=51)"] == "SA > Greedy = HC > GA"
+    # HC above Greedy on provinces, tied on FIRMS: not reversed, but not a strict hold either
+    line = next(l for l in md.splitlines() if l.startswith("- FIRMS k=50"))
+    assert "tidak tetap berlaku" not in line and "seri" in line and "Greedy = HC" in line
+
+
+def test_ranking_holds_when_the_strict_order_is_kept_and_flags_a_reversal():
+    from src.experiments.firms_phase import ranking_report
+    prov = _means([("2026", 38, "SA", 9.1), ("2026", 38, "HC", 8.7), ("2026", 38, "Greedy", 8.69),
+                   ("2026", 38, "GA", 7.2)])
+    firms = _means([("FIRMS", 51, "SA", 22.4), ("FIRMS", 51, "HC", 20.), ("FIRMS", 51, "Greedy", 19.7),
+                    ("FIRMS", 51, "GA", 18.6),
+                    ("FIRMS", 101, "SA", 24.), ("FIRMS", 101, "Greedy", 19.9), ("FIRMS", 101, "HC", 13.),
+                    ("FIRMS", 101, "GA", 15.)])
+    md, _ = ranking_report(prov, _no_sig(prov), firms, _no_sig(firms), [50, 100])
+    lines = {l.split(":")[0]: l for l in md.splitlines() if l.startswith("- FIRMS")}
+    assert "**tetap berlaku**" in lines["- FIRMS k=50"]
+    assert "tidak tetap berlaku" in lines["- FIRMS k=100"] and "Greedy di atas HC" in lines["- FIRMS k=100"]
+    assert "**tidak tetap berlaku** sepenuhnya" in md.split("Kesimpulan")[1]

@@ -14,7 +14,7 @@ Setiap gambar (300 dpi) dan tabel hasil di `results/`, masing-masing dengan capt
 - `results/figures/convergence_n25.png`: Kurva konvergensi n=25: fitness terbaik sejauh ini (rata-rata ± simpangan baku 30 seed) terhadap jumlah evaluasi.
 - `results/figures/convergence_n38.png`: Kurva konvergensi n=38: fitness terbaik sejauh ini (rata-rata ± simpangan baku 30 seed) terhadap jumlah evaluasi.
 - `results/figures/firms_boxplot_fitness.png`: Sebaran fitness akhir 30 seed per algoritma untuk setiap k instance FIRMS.
-- `results/figures/firms_cluster_map_k100.png`: Peta hotspot VIIRS dan 100 Klaster hotspot (warna = Risiko) dengan rute terbaik, nomor urut, Node dilewati, dan Depot Pekanbaru.
+- `results/figures/firms_cluster_map_k100.png`: Peta hotspot VIIRS dan 100 Klaster hotspot (warna = Risiko klaster) dengan rute terbaik, nomor urut, Node dilewati, dan Depot Pekanbaru.
 - `results/figures/scalability.png`: Runtime per run (skala log) dan kualitas solusi (% best-known) terhadap ukuran instance n, per algoritma dan Skenario tahun.
 - `results/figures/scalability_combined.png`: Skalabilitas gabungan: runtime per run (log) dan kualitas (% best-known) terhadap jumlah node kandidat, instance provinsi skenario 2026 (garis penuh) dan instance FIRMS k=50/100/200 (garis putus-putus, area berlabel).
 - `results/figures/sensitivity.png`: Sensitivitas fitness akhir dan jumlah Kunjungan terhadap Batas waktu misi dan g0, n=38 skenario 2026, 30 seed.
@@ -26,9 +26,9 @@ Setiap gambar (300 dpi) dan tabel hasil di `results/`, masing-masing dengan capt
 - `results/tables/decay_ablation_routes.md`: Rute terbaik dengan decay vs g0=0, dievaluasi dengan dan tanpa decay; Prize hilang bila decay diabaikan.
 - `results/tables/decay_ablation_seeds.md`: Prize hilang bila decay diabaikan, per algoritma, berpasangan per seed.
 - `results/tables/firms_calibration.md`: Kalibrasi Batas waktu misi FIRMS: node terkunjungi Greedy pada k=100 untuk setiap kandidat batas waktu.
-- `results/tables/firms_clusters_k50.md`: Daftar 50 Klaster hotspot: lokasi, wilayah, jumlah hotspot, Σ FRP, dan Risiko.
-- `results/tables/firms_clusters_k100.md`: Daftar 100 Klaster hotspot: lokasi, wilayah, jumlah hotspot, Σ FRP, dan Risiko.
-- `results/tables/firms_clusters_k200.md`: Daftar 200 Klaster hotspot: lokasi, wilayah, jumlah hotspot, Σ FRP, dan Risiko.
+- `results/tables/firms_clusters_k50.md`: Daftar 50 Klaster hotspot: lokasi, wilayah, jumlah hotspot, Σ FRP, dan Risiko klaster.
+- `results/tables/firms_clusters_k100.md`: Daftar 100 Klaster hotspot: lokasi, wilayah, jumlah hotspot, Σ FRP, dan Risiko klaster.
+- `results/tables/firms_clusters_k200.md`: Daftar 200 Klaster hotspot: lokasi, wilayah, jumlah hotspot, Σ FRP, dan Risiko klaster.
 - `results/tables/firms_hc_cost.md`: Biaya Steepest-Ascent HC: ukuran neighbourhood O(n²) terhadap budget evaluasi, restart dan langkah naik HC, serta µs per evaluasi, untuk instance provinsi dan FIRMS.
 - `results/tables/firms_instances.md`: Ringkasan instance FIRMS: jumlah hotspot, Σ FRP, Batas waktu misi, budget, dan node terkunjungi Greedy per k.
 - `results/tables/firms_ranking.md`: Pernyataan apakah peringkat algoritma instance provinsi tetap berlaku pada instance FIRMS, dengan peringkat per instance.
@@ -45,16 +45,20 @@ Setiap gambar (300 dpi) dan tabel hasil di `results/`, masing-masing dengan capt
 
 **Data mentah pendukung** (tanpa caption, tidak masuk laporan secara langsung):
 
-- `results/raw/runs.csv`: satu baris per run (fitness, runtime, evaluasi, fitness single-start HC, restart HC, acceptance rate SA, generasi GA).
+- `results/raw/runs.csv`: satu baris per run (fitness, runtime, evaluasi, fitness single-start HC, restart dan langkah naik HC, acceptance rate SA, suhu SA (T0, laju pendinginan, suhu akhir), generasi GA).
 - `results/raw/sensitivity_runs.csv`: satu baris per run sweep sensitivitas.
 - `results/raw/histories.jsonl.gz`: riwayat konvergensi (evaluasi, best-so-far) per run.
 - `results/tables/convergence.csv`: data kurva konvergensi.
 - `results/routes/best_route_{2019,2026}_n{6,10,15,25,38}.json`: detail rute terbaik setiap instance.
+- `results/raw/firms_runs.csv`: satu baris per run FIRMS (kolom sama dengan `runs.csv`, ditambah k dan Batas waktu misi).
+- `results/raw/firms_histories.jsonl.gz`: riwayat konvergensi per run FIRMS.
+- `results/routes/best_route_firms_k{50,100,200}.json`: detail rute terbaik setiap instance FIRMS.
 
 ## Instance FIRMS
 
-<!-- FIRMS: isi setelah #6 -->
+Gambar dan tabel FIRMS sudah masuk daftar di atas (nama file berawalan `firms_`, ditambah `scalability_combined`). Yang paling relevan untuk laporan:
 
-- _(gambar skalabilitas gabungan provinsi + FIRMS)_
-- _(peta sebaran klaster dengan rute terbaik, k=100)_
-- _(tabel ringkasan skalabilitas FIRMS)_
+- `results/figures/scalability_combined.png`: skalabilitas gabungan provinsi + FIRMS (Bab 3.5.1).
+- `results/figures/firms_cluster_map_k100.png`: peta sebaran klaster dengan rute terbaik k=100.
+- `results/tables/firms_summary.md` dan `results/tables/firms_ranking.md`: ringkasan 30 seed per k dan pernyataan apakah peringkat provinsi tetap berlaku.
+- `results/tables/firms_hc_cost.md`: data biaya per langkah HC yang O(n²).

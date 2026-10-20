@@ -1,12 +1,12 @@
-instance,"peringkat (rata-rata fitness, terbaik dulu)"
-"provinsi 2019, n=6",GA > Greedy > HC > SA
-"provinsi 2019, n=10",GA > HC > SA > Greedy
+instance,"peringkat (rata-rata fitness, terbaik dulu; = berarti seri)"
+"provinsi 2019, n=6",GA = Greedy = HC = SA
+"provinsi 2019, n=10",GA = HC = SA > Greedy
 "provinsi 2019, n=15",HC > SA > Greedy > GA
 "provinsi 2019, n=25",HC > SA > Greedy > GA
 "provinsi 2019, n=38",SA > Greedy > HC > GA
-"provinsi 2026, n=6",GA > HC > SA > Greedy
-"provinsi 2026, n=10",GA > HC > SA > Greedy
-"provinsi 2026, n=15",HC > SA > GA > Greedy
+"provinsi 2026, n=6",GA = HC = SA > Greedy
+"provinsi 2026, n=10",GA = HC = SA > Greedy
+"provinsi 2026, n=15",HC = SA > GA > Greedy
 "provinsi 2026, n=25",HC > SA > Greedy > GA
 "provinsi 2026, n=38",SA > HC > Greedy > GA
 FIRMS k=50 (n=51),SA > Greedy > HC > GA

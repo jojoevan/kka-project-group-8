@@ -30,8 +30,12 @@ Varian instance provinsi yang komponen risiko tahun berjalannya diambil dari sat
 ## Nilai
 
 **Risiko**:
-Nilai kepentingan sebuah provinsi dalam rentang [0,1], dinormalisasi sekali atas seluruh 38 provinsi. Nilainya sama di instance mana pun.
+Nilai kepentingan sebuah node provinsi dalam rentang [0,1], dinormalisasi sekali atas seluruh 38 provinsi. Nilainya sama di instance provinsi mana pun. Untuk node Klaster hotspot, lihat **Risiko klaster**.
 _Hindari_: bobot, prioritas
+
+**Risiko klaster**:
+Nilai kepentingan sebuah Klaster hotspot dalam rentang [0,1]: Σ FRP hotspot anggotanya → log1p → min-max antar-klaster **dalam satu instance** (ADR-0001). Berbeda dari Risiko provinsi, nilainya bergantung pada k, sehingga Risiko klaster tidak bisa dibandingkan antar-instance FIRMS maupun dengan Risiko provinsi.
+_Hindari_: Risiko (tanpa keterangan) bila yang dimaksud klaster, FRP (FRP adalah input, bukan Risikonya)
 
 **Kunjungan**:
 Satu kali sortie pemadaman (water-bombing/OMC) di sebuah node selama waktu tinggal (dwell). Setiap node paling banyak dikunjungi sekali.

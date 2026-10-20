@@ -1,8 +1,15 @@
-2026-10-20 06:16:34,031 INFO: Mode: penuh; 1202 run; 12 worker; Batas waktu misi 72 jam untuk semua instance
-2026-10-20 06:16:34,043 INFO: Catatan: skenario 2019 n=6 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 5 node dalam 24.4 jam); diterima sesuai keputusan owner.
-2026-10-20 06:16:34,053 INFO: Catatan: skenario 2019 n=10 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 9 node dalam 59.0 jam); diterima sesuai keputusan owner.
-2026-10-20 06:16:34,097 INFO: Catatan: skenario 2026 n=6 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 5 node dalam 25.8 jam); diterima sesuai keputusan owner.
-2026-10-20 06:16:34,106 INFO: Catatan: skenario 2026 n=10 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 9 node dalam 54.3 jam); diterima sesuai keputusan owner.
-2026-10-20 06:16:34,138 INFO: Sweep sensitivitas: 960 run tambahan
-2026-10-20 06:27:55,986 INFO: Semua run selesai dalam 681.8 s
-2026-10-20 06:28:01,182 INFO: Total runtime eksperimen: 687.4 s (11.5 menit)
+2026-10-20 07:11:00,312 INFO: Mode: penuh; 1202 run; 12 worker; Batas waktu misi 72 jam untuk semua instance
+2026-10-20 07:11:00,320 INFO: Catatan: skenario 2019 n=6 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 5 node dalam 24.4 jam); diterima sesuai keputusan owner.
+2026-10-20 07:11:00,326 INFO: Catatan: skenario 2019 n=10 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 9 node dalam 59.0 jam); diterima sesuai keputusan owner.
+2026-10-20 07:11:00,350 INFO: Catatan: skenario 2026 n=6 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 5 node dalam 25.8 jam); diterima sesuai keputusan owner.
+2026-10-20 07:11:00,355 INFO: Catatan: skenario 2026 n=10 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 9 node dalam 54.3 jam); diterima sesuai keputusan owner.
+2026-10-20 07:11:00,374 INFO: Sweep sensitivitas: 960 run tambahan
+2026-10-20 07:21:21,961 INFO: Semua run selesai dalam 621.6 s
+2026-10-20 07:21:27,314 INFO: Snapshot FIRMS SUOMI_VIIRS_C2_SouthEast_Asia_7d_2026-10-20.csv: 28983 hotspot setelah filter confidence nominal/high dan bounding box (Kalimantan 22152, Sumatra 6831)
+2026-10-20 07:21:37,338 INFO: Batas waktu misi FIRMS: 72 jam (greedy k=100 mengunjungi 39% klaster, TIDAK dalam target; terdekat)
+2026-10-20 07:21:37,339 INFO: FIRMS: 360 run (k=[50, 100, 200], 30 seed, budget 100000), 12 worker
+2026-10-20 07:31:29,847 INFO: Semua run FIRMS selesai dalam 592.5 s
+2026-10-20 07:31:29,960 INFO: FIRMS k=50: runtime rata-rata Greedy 0.00 s, HC 12.14 s, SA 17.46 s, GA 20.71 s
+2026-10-20 07:31:29,962 INFO: FIRMS k=100: runtime rata-rata Greedy 0.01 s, HC 18.00 s, SA 25.13 s, GA 27.69 s
+2026-10-20 07:31:29,963 INFO: FIRMS k=200: runtime rata-rata Greedy 0.02 s, HC 30.54 s, SA 38.83 s, GA 41.80 s
+2026-10-20 07:31:31,923 INFO: Total runtime eksperimen: 1231.7 s (20.5 menit)

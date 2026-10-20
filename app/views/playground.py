@@ -1,12 +1,10 @@
 """Page 2: run the solvers live on a province instance and replay how the best route improves."""
-import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 
 from app import charts
-from app.core import (ALGORITHM_NAMES, ALGORITHMS, COLORS, EXACT_MAX_NODES, SCENARIOS, SEPARATORS, SIZES, best_known, config,
-                      experiment_budget, fmt, instance, run, term)
-from app.views.problem import positions
+from app.core import (ALGORITHM_NAMES, ALGORITHMS, COLORS, EXACT_MAX_NODES, SCENARIOS, SIZES, best_known, config,
+                      experiment_budget, fmt, instance, rows_height, run, term)
+from app.views.problem import positions, route_table
 
 BUDGETS = [1000, 2000, 5000, 10000, 20000, 50000]
 
@@ -30,18 +28,19 @@ HOW = {
 
 def _form(cfg):
     with st.form("params"):
-        a, b, c = st.columns(3)
+        algorithms = st.multiselect("Algoritma", [*ALGORITHMS, "Exact"], default=list(ALGORITHMS),
+                                    help=f"Exact hanya untuk n = {EXACT_MAX_NODES}.")
+        a, b, c = st.columns(3, gap="large")
         scenario = a.radio("Skenario tahun", SCENARIOS, index=1, horizontal=True, help=term("Skenario tahun"))
-        n = a.select_slider("n (jumlah node, termasuk Depot)", SIZES, value=15, help=term("Instance"))
-        algorithms = b.multiselect("Algoritma", [*ALGORITHMS, "Exact"], default=list(ALGORITHMS),
-                                   help=f"Exact hanya untuk n = {EXACT_MAX_NODES}.")
-        seed = b.number_input("Seed", 0, 999, 0, help="Mengatur urutan awal acak dan keacakan algoritma.")
-        budget = c.select_slider("Budget evaluasi", BUDGETS, value=5000, help=term("Budget evaluasi"))
+        seed = a.number_input("Seed", 0, 999, 0, help="Mengatur urutan awal acak dan keacakan algoritma.")
+        n = b.select_slider("n (jumlah node, termasuk Depot)", SIZES, value=15, help=term("Instance"))
+        budget = b.select_slider("Budget evaluasi", BUDGETS, value=5000, help=term("Budget evaluasi"),
+                                 format_func=lambda v: fmt(v, ",d"))
         g0 = c.slider("g0 (laju peluruhan)", 0.0, 0.05, float(cfg["decay_g0"]), 0.001, format="%.3f",
                       help="0 berarti Prize tidak meluruh.")
         t_max = c.slider("Batas waktu misi (jam)", 12, 120, int(cfg["time_limit_hours"]), 6,
                          help=term("Batas waktu misi"))
-        submitted = st.form_submit_button("▶ Jalankan", type="primary")
+        submitted = st.form_submit_button("Jalankan", type="primary", icon=":material/play_arrow:")
     if "Exact" in algorithms and n > EXACT_MAX_NODES:
         algorithms = [x for x in algorithms if x != "Exact"]
         if submitted: st.warning(f"Exact dilewati: hanya dijalankan untuk n = {EXACT_MAX_NODES}.")
@@ -77,12 +76,8 @@ def _diagnostics(alg, result, n):
         c[2].metric("Acceptance rate", fmt(x["acceptance_rate"], ".3f"), help="Fraksi langkah yang diterima.")
         trace = x.get("temperature_trace") or []
         if trace:
-            fig = go.Figure(go.Scatter(x=[e for e, _ in trace], y=[t for _, t in trace], mode="lines",
-                                       line=dict(color=COLORS["SA"])))
-            fig.update_xaxes(title="Evaluasi"); fig.update_yaxes(title="Suhu T", type="log")
-            fig.update_layout(title="Jadwal pendinginan SA", height=280, margin=dict(l=10, r=10, t=40, b=10),
-                              separators=SEPARATORS)
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(charts.line([e for e, _ in trace], [t for _, t in trace], COLORS["SA"], "Evaluasi",
+                                        "Suhu T", "Jadwal pendinginan SA", log_y=True), width="stretch")
     elif alg == "GA":
         c = st.columns(2)
         c[0].metric("Ukuran populasi", x["population"]); c[1].metric("Generasi", x["generations"])
@@ -92,7 +87,7 @@ def _diagnostics(alg, result, n):
 
 def render():
     cfg = config()
-    st.title("▶️ Coba sendiri")
+    st.title("Coba sendiri")
     st.markdown("Atur instance dan algoritma, lalu tekan **Jalankan**. Solver yang dipakai sama persis dengan "
                 "eksperimen; halaman ini hanya merekam setiap kali rute terbaik membaik, supaya prosesnya bisa "
                 "diputar ulang di peta.")
@@ -116,15 +111,15 @@ def render():
     full = experiment_budget(p["n"])
     ref = best_known(p["scenario"], p["n"]) if default else None
     if p["budget"] < full:
-        st.caption(f"⚠️ Budget {fmt(p['budget'], ',d')} lebih kecil dari budget eksperimen untuk n = {p['n']} "
+        st.caption(f"Catatan: Budget {fmt(p['budget'], ',d')} lebih kecil dari budget eksperimen untuk n = {p['n']} "
                    f"({fmt(full, ',d')}). Hasil di sini bisa berbeda dari angka di laporan.")
     if not default:
-        st.caption("⚠️ g0 atau Batas waktu misi berbeda dari config.yaml, jadi tidak ada Best-known dari eksperimen.")
+        st.caption("Catatan: g0 atau Batas waktu misi berbeda dari config.yaml, jadi tidak ada Best-known dari eksperimen.")
 
     cols = st.columns(len(results))
     for col, (alg, r) in zip(cols, results.items()):
         d = r["best_route"]
-        col.metric(alg, fmt(r["best_fitness"], ".3f"), help=f"{ALGORITHM_NAMES[alg]}. " + term("Fitness"),
+        col.metric(alg, fmt(r["best_fitness"], ".3f"), help=f"{ALGORITHM_NAMES[alg]}. " + term("Fitness"), border=True,
                    delta=f"{fmt(100 * r['best_fitness'] / ref, '.1f')}% dari Best-known" if ref else None,
                    delta_color="off")
         col.caption(f"{len(d['route'])}/{p['n'] - 1} node dikunjungi · waktu misi {fmt(d['mission_time_h'], '.1f')} "
@@ -146,15 +141,15 @@ def render():
             _diagnostics(alg, r, p["n"])
             states = _states(inst, r)
             if len(states) > 1:
-                st.caption(f"Rute terbaik membaik {len(states)} kali. Tekan **▶ Putar** atau geser slider untuk "
+                st.caption(f"Rute terbaik membaik {len(states)} kali. Tekan **Putar** atau geser slider untuk "
                            "melihat urutannya.")
             st.plotly_chart(charts.route_map(positions(), inst.names[inst.depot], states, COLORS[alg]),
                             width="stretch", key=f"map_{alg}")
             d = r["best_route"]
-            left, right = st.columns([2, 1])
-            left.dataframe(pd.DataFrame([{"urutan": k, "provinsi": v["province"], "tiba (jam)": round(v["arrival_h"], 2),
-                                          "Risiko": round(v["risk"], 3), "Prize": round(v["prize"], 3)}
-                                         for k, v in enumerate(d["route"], 1)]), hide_index=True)
+            left, right = st.columns([2, 1], gap="large")
+            if d["route"]:
+                left.dataframe(route_table(d["route"]), hide_index=True, width="stretch",
+                               height=rows_height(min(len(d["route"]), 12)))
             right.markdown("**Node dilewati**" + (":\n\n" + "\n".join(f"- {s['province']} (Risiko {fmt(s['risk'], '.2f')})"
                                                                       for s in d["skipped"]) if d["skipped"] else ": tidak ada"),
                            help=term("Node dilewati"))

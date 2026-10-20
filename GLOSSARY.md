@@ -48,3 +48,17 @@ _Hindari_: reward, skor, nilai
 **Node dilewati**:
 Node dalam urutan kandidat yang tidak muat dalam sisa waktu misi (termasuk waktu kembali ke depot). Node ini dibuang, lalu node berikutnya dalam urutan tetap dicoba.
 _Hindari_: node gagal, node infeasible
+
+## Evaluasi algoritma
+
+**Fitness**:
+Total Prize yang terkumpul oleh satu rute. Semakin besar semakin baik.
+_Hindari_: skor, nilai, objective (dalam teks berbahasa Indonesia)
+
+**Budget evaluasi**:
+Jumlah maksimum perhitungan Fitness yang boleh dilakukan satu algoritma dalam satu run. Nilainya sama untuk semua algoritma pada instance yang sama, sehingga perbandingannya adil.
+_Hindari_: budget (tanpa keterangan, bisa tertukar dengan Batas waktu misi), iterasi, generasi
+
+**Best-known**:
+Fitness terbaik dari semua run dan semua algoritma pada satu instance. Ini bukan optimum terbukti, kecuali bila dihitung dengan metode eksak.
+_Hindari_: optimum, solusi optimal (kecuali memang terbukti optimal)

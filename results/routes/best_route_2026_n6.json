@@ -1,0 +1,48 @@
+{
+  "scenario": "2026",
+  "n": 6,
+  "algorithm": "HC",
+  "seed": 0,
+  "route": [
+    {
+      "index": 5,
+      "province": "Jambi",
+      "arrival_h": 1.9349882793990367,
+      "prize": 0.4903316125408399,
+      "risk": 0.5010302696328228
+    },
+    {
+      "index": 3,
+      "province": "Sumatera Selatan",
+      "arrival_h": 4.074138721463754,
+      "prize": 0.7074177929917209,
+      "risk": 0.7554621020869798
+    },
+    {
+      "index": 1,
+      "province": "Kalimantan Barat",
+      "arrival_h": 8.556207872930994,
+      "prize": 0.8427169373827975,
+      "risk": 1.0
+    },
+    {
+      "index": 2,
+      "province": "Kalimantan Tengah",
+      "arrival_h": 12.804436568622052,
+      "prize": 0.6815459918032191,
+      "risk": 0.8600762627946188
+    },
+    {
+      "index": 4,
+      "province": "Kalimantan Selatan",
+      "arrival_h": 14.633142536075194,
+      "prize": 0.5216163742306761,
+      "risk": 0.6038125655234121
+    }
+  ],
+  "fitness": 3.2436287089492533,
+  "distance_km": 3876.0308689806884,
+  "mission_time_h": 24.380154344903445,
+  "remaining_time_h": 47.619845655096555,
+  "skipped": []
+}

@@ -1,0 +1,8 @@
+2026-10-20 06:42:34,680 INFO: Snapshot FIRMS SUOMI_VIIRS_C2_SouthEast_Asia_7d_2026-10-20.csv: 28983 hotspot setelah filter confidence nominal/high dan bounding box (Kalimantan 22152, Sumatra 6831)
+2026-10-20 06:42:48,247 INFO: Batas waktu misi FIRMS: 72 jam (greedy k=100 mengunjungi 39% klaster, TIDAK dalam target; terdekat)
+2026-10-20 06:42:48,253 INFO: FIRMS: 360 run (k=[50, 100, 200], 30 seed, budget 100000), 12 worker
+2026-10-20 06:55:05,821 INFO: Semua run FIRMS selesai dalam 737.6 s
+2026-10-20 06:55:05,934 INFO: FIRMS k=50: runtime rata-rata Greedy 0.00 s, HC 14.71 s, SA 21.36 s, GA 25.81 s
+2026-10-20 06:55:05,936 INFO: FIRMS k=100: runtime rata-rata Greedy 0.01 s, HC 23.06 s, SA 32.11 s, GA 35.12 s
+2026-10-20 06:55:05,938 INFO: FIRMS k=200: runtime rata-rata Greedy 0.03 s, HC 38.08 s, SA 48.01 s, GA 52.19 s
+2026-10-20 06:55:07,867 INFO: Total runtime eksperimen: 753.6 s (12.6 menit)

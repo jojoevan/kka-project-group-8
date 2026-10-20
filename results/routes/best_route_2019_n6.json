@@ -1,0 +1,48 @@
+{
+  "scenario": "2019",
+  "n": 6,
+  "algorithm": "Greedy",
+  "seed": 0,
+  "route": [
+    {
+      "index": 5,
+      "province": "Jambi",
+      "arrival_h": 1.9349882793990367,
+      "prize": 0.7731752374527302,
+      "risk": 0.7882817711614749
+    },
+    {
+      "index": 2,
+      "province": "Sumatera Selatan",
+      "arrival_h": 4.074138721463754,
+      "prize": 0.8851789381989923,
+      "risk": 0.9219870720681866
+    },
+    {
+      "index": 1,
+      "province": "Kalimantan Barat",
+      "arrival_h": 8.556207872930994,
+      "prize": 0.8662172630834036,
+      "risk": 0.9435957438560101
+    },
+    {
+      "index": 3,
+      "province": "Kalimantan Tengah",
+      "arrival_h": 12.804436568622052,
+      "prize": 0.8093455161189254,
+      "risk": 0.9199048878706572
+    },
+    {
+      "index": 4,
+      "province": "Kalimantan Selatan",
+      "arrival_h": 14.633142536075194,
+      "prize": 0.7669270167961658,
+      "risk": 0.8877792041400149
+    }
+  ],
+  "fitness": 4.100843971650217,
+  "distance_km": 3876.0308689806884,
+  "mission_time_h": 24.380154344903445,
+  "remaining_time_h": 47.619845655096555,
+  "skipped": []
+}

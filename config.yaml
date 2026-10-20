@@ -8,5 +8,12 @@ gamma: 0.8
 weights: {hist: 0.4, cur: 0.3, ops: 0.3}
 decay_g0: 0.01
 decay_kappa: 1.0
-fitness_evaluations: 50000
+evaluation_budget:  # budget evaluasi fitness per run, sama untuk semua algoritma
+  small: 20000      # n <= small_max_n
+  large: 50000      # n > small_max_n
+  small_max_n: 15
 seeds: 30
+quick:  # mode cepat (--quick) untuk smoke test
+  sizes: [6, 10]
+  seeds: 3
+  budget: 300

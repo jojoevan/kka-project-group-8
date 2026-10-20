@@ -1,0 +1,76 @@
+{
+  "scenario": "2026",
+  "n": 10,
+  "algorithm": "HC",
+  "seed": 0,
+  "route": [
+    {
+      "index": 3,
+      "province": "Sumatera Selatan",
+      "arrival_h": 3.070427069491385,
+      "prize": 0.7189626496465275,
+      "risk": 0.7554621020869798
+    },
+    {
+      "index": 1,
+      "province": "Kalimantan Barat",
+      "arrival_h": 7.552496220958625,
+      "prize": 0.8598047723338179,
+      "risk": 1.0
+    },
+    {
+      "index": 2,
+      "province": "Kalimantan Tengah",
+      "arrival_h": 11.800724916649681,
+      "prize": 0.6940897200787346,
+      "risk": 0.8600762627946188
+    },
+    {
+      "index": 8,
+      "province": "Kalimantan Selatan",
+      "arrival_h": 13.629430884102824,
+      "prize": 0.5268782614699975,
+      "risk": 0.6038125655234121
+    },
+    {
+      "index": 7,
+      "province": "Jawa Timur",
+      "arrival_h": 17.401711771926838,
+      "prize": 0.5209917968463051,
+      "risk": 0.6200198008177509
+    },
+    {
+      "index": 5,
+      "province": "Nusa Tenggara Barat",
+      "arrival_h": 20.698992765952028,
+      "prize": 0.5463047645054904,
+      "risk": 0.6719385711943862
+    },
+    {
+      "index": 4,
+      "province": "Nusa Tenggara Timur",
+      "arrival_h": 26.52691820814882,
+      "prize": 0.5444268944104391,
+      "risk": 0.7098139216964034
+    },
+    {
+      "index": 6,
+      "province": "Maluku",
+      "arrival_h": 32.587147096245346,
+      "prize": 0.4623333956596708,
+      "risk": 0.6404414712739608
+    },
+    {
+      "index": 9,
+      "province": "Lampung",
+      "arrival_h": 48.235685301476224,
+      "prize": 0.3512098842776749,
+      "risk": 0.5689205871122436
+    }
+  ],
+  "fitness": 5.225002139228657,
+  "distance_km": 8949.171539117957,
+  "mission_time_h": 53.74585769558979,
+  "remaining_time_h": 18.25414230441021,
+  "skipped": []
+}

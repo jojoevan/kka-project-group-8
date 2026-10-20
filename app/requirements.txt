@@ -1,0 +1,9 @@
+# Dependencies for deploying the app (Streamlit Community Cloud reads this file first).
+streamlit>=1.50
+plotly>=6.0
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+pyyaml>=6.0
+openpyxl>=3.1
+tabulate>=0.9

@@ -27,7 +27,7 @@ Hasil pemeriksaan kualitas data ada di `reports/data_quality.md`.
               ops_i = 0 untuk 32 provinsi lain, dan untuk semua provinsi bila s ≠ 2026
     Risiko_i^s = minmax_{38 provinsi}( α·hist_i + β·cur_i^s + δ·ops_i )
 
-Default: α=0.4, β=0.3, δ=0.3, γ=0.8 (ASSUMED). Min-max dilakukan **sekali atas 38 provinsi**, sehingga Risiko sebuah provinsi sama di instance mana pun (CHANGELOG no. 1).
+Default: α=0,4, β=0,3, δ=0,3, γ=0,8 (ASSUMED). Min-max dilakukan **sekali atas 38 provinsi**, sehingga Risiko sebuah provinsi sama di instance mana pun (CHANGELOG no. 1).
 
 Jumlah hotspot tidak dipakai sendirian sebagai ukuran keparahan. Alasannya, Riau mencatat hotspot 0 tetapi punya fire spot, kualitas udara berbahaya, dan luas terbakar indikatif yang besar (`reports/data_quality.md`).
 
@@ -37,7 +37,7 @@ Diberikan sebuah **Instance** dengan:
 
 - Himpunan node V = {0, 1, …, n−1}. Node 0 adalah **Depot** (Riau).
 - Risiko r_i ∈ [0,1] untuk setiap node.
-- Jarak d_ij = Haversine(i, j) × faktor detour (1.15).
+- Jarak d_ij = Haversine(i, j) × faktor detour (1,15).
 - Kecepatan v (200 km/jam).
 - Waktu tinggal per Kunjungan w (1 jam).
 - **Batas waktu misi** T_max (72 jam).
@@ -50,7 +50,7 @@ Sebuah rute adalah barisan node berbeda R = (i_1, …, i_m) ⊆ V \ {0}. Waktu t
 
     Prize_i(t_i) = r_i · exp(−g_i · t_i),   g_i = g0 · (1 + κ · ops_i)
 
-dengan g0 = 0.01/jam dan κ = 1.0 (ASSUMED). Provinsi dengan keparahan operasional tinggi meluruh lebih cepat. Dengan g0 = 0, masalah ini kembali menjadi orienteering statis.
+dengan g0 = 0.01/jam dan κ = 1,0 (ASSUMED). Provinsi dengan keparahan operasional tinggi meluruh lebih cepat. Dengan g0 = 0, masalah ini kembali menjadi orienteering statis.
 
 Masalah optimisasinya:
 

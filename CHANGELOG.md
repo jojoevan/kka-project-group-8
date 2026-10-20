@@ -6,7 +6,7 @@ Catatan keputusan pemodelan yang **direvisi** dari rencana awal (PLAN) atau dari
 
 - **Sebelumnya**: Risiko di-min-max ulang di setiap instance. Node dengan Risiko terendah di instance mana pun selalu bernilai 0. Di instance 6 provinsi, Jambi mendapat Risiko 0 padahal sedang ada kebakaran aktif.
 - **Sekarang**: Risiko dihitung dan dinormalisasi **sekali** atas 38 provinsi di `src/data_prep.py`, per Skenario tahun. Pembangun instance memakai nilainya apa adanya. Risiko sebuah provinsi sama di n=6 dan n=38.
-- **Alasan**: Risiko harus menjadi sifat provinsi, bukan sifat instance. Hasilnya, Jambi kini mendapat Risiko 2026 sebesar 0.501 (`reports/data_quality.md`).
+- **Alasan**: Risiko harus menjadi sifat provinsi, bukan sifat instance. Hasilnya, Jambi kini mendapat Risiko 2026 sebesar 0,501 (`reports/data_quality.md`).
 
 ## 2. Komponen operasional hanya untuk Skenario tahun 2026 (#2)
 

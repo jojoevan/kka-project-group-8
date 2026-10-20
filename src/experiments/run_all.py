@@ -35,7 +35,8 @@ from src.config import load_config, province_coords, province_features, province
 from src.data_prep import SCENARIOS
 from src.experiments import analysis, firms_phase, plots
 from src.experiments.records import HEURISTICS, run_record
-from src.experiments.reporting import (ABLATION_ORDER_ID, ABLATION_ROUTES_ID, ABLATION_SEEDS_ID, CASE_STUDY_ID,
+from src.numfmt import id_format
+from src.experiments.reporting import (to_markdown_id, ABLATION_ORDER_ID, ABLATION_ROUTES_ID, ABLATION_SEEDS_ID, CASE_STUDY_ID,
                                        GAP_ID, INSTANCES_ID, SCALABILITY_ID, SENSITIVITY_ID, SUMMARY_ID,
                                        WILCOXON_ID, write_table)
 from src.experiments.stats import (convergence_table, optimality_gap_table,
@@ -236,12 +237,13 @@ def _run_province(cfg, args, out, coords):
             cs = analysis.case_study_table(inst, results[idx][2])
             cs.to_csv(out / "tables" / "case_study_route.csv", index=False)
             r = results[idx][2]
-            header = (f"# {title}\n\nDepot: {inst.names[inst.depot]}. Batas waktu misi {inst.time_limit:g} jam; "
-                      f"total Prize {r['fitness']:.4f}; {len(r['route'])} Kunjungan, {len(r['skipped'])} Node "
-                      f"dilewati; total jarak {r['distance_km']:.0f} km; waktu misi {r['mission_time_h']:.2f} jam "
-                      f"(sisa {r['remaining_time_h']:.2f} jam).\n\n")
+            header = (f"# {title}\n\nDepot: {inst.names[inst.depot]}. Batas waktu misi "
+                      f"{id_format(inst.time_limit, 'g')} jam; total Prize {id_format(r['fitness'], '.4f')}; "
+                      f"{len(r['route'])} Kunjungan, {len(r['skipped'])} Node dilewati; total jarak "
+                      f"{id_format(r['distance_km'], ',.0f')} km; waktu misi {id_format(r['mission_time_h'], '.2f')} "
+                      f"jam (sisa {id_format(r['remaining_time_h'], '.2f')} jam).\n\n")
             (out / "tables" / "case_study_route.md").write_text(
-                header + cs.rename(columns=CASE_STUDY_ID).to_markdown(index=False, floatfmt=".4g") + "\n",
+                header + to_markdown_id(cs.rename(columns=CASE_STUDY_ID)) + "\n",
                 encoding="utf8")
     return runs
 

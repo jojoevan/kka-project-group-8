@@ -6,11 +6,24 @@ tables reuse the province labels for the columns they share.
 """
 
 
+from src.numfmt import id_table_cell
+
+
+def to_markdown_id(df, floatfmt=".4g"):
+    """Markdown table with floats in Indonesian format (decimal comma); text columns left-aligned."""
+    shown = df.copy()
+    for col in shown.columns:
+        if shown[col].dtype.kind == "f":
+            shown[col] = [id_table_cell(float(v), floatfmt) for v in shown[col]]
+    return shown.to_markdown(index=False, disable_numparse=True)
+
+
 def write_table(df, path_stem, rename=None, floatfmt=".4g"):
-    """df as path_stem.csv (English columns, full precision) and path_stem.md (labels from rename)."""
+    """df as path_stem.csv (English columns, full precision, decimal point) and path_stem.md (labels from
+    rename, decimal comma)."""
     df.to_csv(path_stem.with_suffix(".csv"), index=False)
     shown = df.rename(columns=rename or {})
-    path_stem.with_suffix(".md").write_text(shown.to_markdown(index=False, floatfmt=floatfmt) + "\n", encoding="utf8")
+    path_stem.with_suffix(".md").write_text(to_markdown_id(shown, floatfmt) + "\n", encoding="utf8")
 
 
 SUMMARY_ID = {"scenario": "skenario", "algorithm": "algoritma", "runs": "jumlah run", "best": "terbaik",

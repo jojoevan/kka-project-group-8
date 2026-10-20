@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 import pandas as pd
 from src.experiments.records import HEURISTICS
+from src.numfmt import id_text
 
 _BLOCK = re.compile(r"(<!-- AUTO:([\w-]+) -->\n)(.*?)(<!-- /AUTO:\2 -->)", re.S)
 
@@ -64,7 +65,7 @@ def provenance_table(cfg):
          f"kandidat {list(calibration.CANDIDATE_TIME_LIMITS)} jam, target "
          f"{calibration.TARGET_FRACTION[0]:.0%}–{calibration.TARGET_FRACTION[1]:.0%} node terkunjungi "
          "(`src/calibration.py`; hasil: `results/tables/instances.md`)", "DERIVED"),
-        ("Bobot Risiko α, β, δ", f"{w['hist']}, {w['cur']}, {w['ops']}", "`config.yaml: weights`", "ASSUMED"),
+        ("Bobot Risiko α, β, δ", f"{w['hist']}; {w['cur']}; {w['ops']}", "`config.yaml: weights`", "ASSUMED"),
         ("Faktor keterkinian γ", f"{cfg['gamma']}", "`config.yaml: gamma`", "ASSUMED"),
         ("Koordinat node provinsi", "koordinat ibu kota provinsi (geografi publik, perlu diverifikasi)",
          "`data/external/province_coords.csv`", "ASSUMED"),
@@ -94,7 +95,7 @@ def provenance_table(cfg):
          f"(n ≤ {exact.MAX_NODES}, n mencakup Depot; {exact.MAX_NODES - 1} node kandidat)",
          "`src/algorithms/exact.py`", "ASSUMED"),
         ("Sweep sensitivitas", f"n={sens['n']}, skenario {sens['scenario']}; T_max "
-         f"{sens['time_limit_hours']} jam; g0 {sens['decay_g0']}", "`config.yaml: analysis.sensitivity`",
+         f"{'; '.join(map(str, sens['time_limit_hours']))} jam; g0 {'; '.join(map(str, sens['decay_g0']))}", "`config.yaml: analysis.sensitivity`",
          "ASSUMED"),
         ("Mode cepat (`--quick`)", f"n {q['sizes']}, {q['seeds']} seed, budget {q['budget']}",
          "`config.yaml: quick`", "ASSUMED"),
@@ -314,9 +315,9 @@ def _generators(root):
 
 
 class _Lazy(dict):
-    """Computes a block only when a document asks for it."""
+    """Computes a block only when a document asks for it, with decimal commas (Indonesian docs)."""
     def __init__(self, gens): super().__init__(); self.gens = gens
-    def __missing__(self, key): self[key] = v = self.gens[key](); return v
+    def __missing__(self, key): self[key] = v = id_text(self.gens[key]()); return v
 
 
 def main(argv=None):

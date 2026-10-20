@@ -23,20 +23,99 @@ def boxplot_fitness(runs, n, algorithms, path):
 
 
 def route_map(coords, inst, route_detail, title, path):
-    """Lon/lat sketch of a route with visit order and arrival times."""
+    """Lon/lat case-study map: Depot, numbered Kunjungan with arrival-time labels and direction arrows,
+    and Node dilewati marked separately (labelled with their Risiko)."""
     c = coords.set_index("Provinsi"); route = route_detail["route"]
-    fig = plt.figure(figsize=(9, 6))
-    plt.scatter(c.loc[inst.names, "lon"], c.loc[inst.names, "lat"], alpha=.45, label="Provinsi")
-    depot = inst.names[inst.depot]; prev = depot
-    plt.scatter([c.loc[depot, "lon"]], [c.loc[depot, "lat"]], marker="*", s=150, c="red", label="Depot")
-    for k, node in enumerate(route, 1):
-        name = node["province"]
-        plt.annotate(f'{k}. {name}\n{node["arrival_h"]:.1f} jam', (c.loc[name, "lon"], c.loc[name, "lat"]), fontsize=7)
-        plt.annotate("", xy=(c.loc[name, "lon"], c.loc[name, "lat"]), xytext=(c.loc[prev, "lon"], c.loc[prev, "lat"]),
-                     arrowprops={"arrowstyle": "->", "lw": .8})
-        prev = name
+    def xy(name): return float(c.loc[name, "lon"]), float(c.loc[name, "lat"])
+    depot = inst.names[inst.depot]
+    fig, ax = plt.subplots(figsize=(12, 7.5))
+    stops = [depot] + [node["province"] for node in route] + ([depot] if route else [])
+    for a, b in zip(stops, stops[1:]):
+        ax.annotate("", xy=xy(b), xytext=xy(a),
+                    arrowprops={"arrowstyle": "-|>", "lw": .9, "color": "tab:blue", "shrinkA": 5, "shrinkB": 5})
     if route:
-        plt.annotate("", xy=(c.loc[depot, "lon"], c.loc[depot, "lat"]), xytext=(c.loc[prev, "lon"], c.loc[prev, "lat"]),
-                     arrowprops={"arrowstyle": "->", "lw": .8})
-    plt.title(title); plt.xlabel("Bujur"); plt.ylabel("Lintang"); plt.legend(loc="lower left")
-    plt.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+        ax.scatter(*zip(*[xy(node["province"]) for node in route]), s=70, c="tab:blue", zorder=3,
+                   label=f"Kunjungan ({len(route)})")
+    for k, node in enumerate(route, 1):
+        x, y = xy(node["province"])
+        ax.text(x, y, str(k), color="white", fontsize=6, ha="center", va="center", zorder=4, fontweight="bold")
+        ax.annotate(f'{k}. {node["province"]}\ntiba {node["arrival_h"]:.1f} jam', (x, y), xytext=(5, 4),
+                    textcoords="offset points", fontsize=6.5)
+    skipped = route_detail["skipped"]
+    if skipped:
+        ax.scatter(*zip(*[xy(s["province"]) for s in skipped]), marker="x", s=40, c="gray", zorder=3,
+                   label=f"Node dilewati ({len(skipped)})")
+        for s in skipped:
+            ax.annotate(f'{s["province"]} (Risiko {s["risk"]:.2f})', xy(s["province"]), xytext=(4, -8),
+                        textcoords="offset points", fontsize=5.5, color="gray")
+    ax.scatter(*xy(depot), marker="*", s=280, c="red", zorder=5, label=f"Depot ({depot})")
+    ax.set_title(f"{title}\nTotal Prize {route_detail['fitness']:.3f}; waktu misi "
+                 f"{route_detail['mission_time_h']:.1f} dari {inst.time_limit:g} jam; jarak "
+                 f"{route_detail['distance_km']:.0f} km", fontsize=10)
+    ax.set_xlabel("Bujur (°BT)"); ax.set_ylabel("Lintang (°)"); ax.grid(alpha=.3); ax.set_aspect("equal")
+    ax.legend(loc="lower left", fontsize=8)
+    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+
+
+def convergence(conv, n, algorithms, path):
+    """Mean best-so-far fitness vs evaluations with a +-1 std band across seeds, one panel per Skenario
+    tahun, for instance size n."""
+    sub = conv[conv.n == n]
+    scenarios = sorted(sub.scenario.astype(str).unique())
+    fig, axes = plt.subplots(1, len(scenarios), figsize=(6 * len(scenarios), 4.5), squeeze=False)
+    for ax, sc in zip(axes[0], scenarios):
+        s = sub[sub.scenario.astype(str) == sc]
+        for a in algorithms:
+            c = s[s.algorithm == a].sort_values("evals")
+            if c.empty: continue
+            line, = ax.plot(c.evals, c["mean"], label=a, lw=1.2)
+            ax.fill_between(c.evals, c["mean"] - c["std"], c["mean"] + c["std"], color=line.get_color(), alpha=.2)
+        ax.set_title(f"Skenario {sc}"); ax.set_xlabel("Jumlah evaluasi fitness")
+        ax.set_ylabel("Fitness terbaik sejauh ini (total Prize)"); ax.grid(alpha=.3); ax.legend(title="Algoritma")
+    seeds = int(sub.seeds.max())
+    fig.suptitle(f"Kurva konvergensi: rata-rata ± simpangan baku {seeds} seed (n = {n})")
+    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+
+
+def scalability(table, algorithms, path):
+    """Runtime (log scale) and quality (% of best-known) against n; one column per Skenario tahun."""
+    scenarios = sorted(table.scenario.astype(str).unique())
+    fig, axes = plt.subplots(2, len(scenarios), figsize=(6 * len(scenarios), 8), squeeze=False)
+    for col, sc in enumerate(scenarios):
+        s = table[table.scenario.astype(str) == sc]
+        for a in algorithms:
+            c = s[s.algorithm == a].sort_values("n")
+            axes[0, col].errorbar(c.n, c.runtime_mean_s, yerr=c.runtime_std_s, marker="o", capsize=3, label=a)
+            axes[1, col].errorbar(c.n, c.quality_mean_pct, yerr=c.quality_std_pct, marker="o", capsize=3, label=a)
+        axes[0, col].set_yscale("log"); axes[0, col].set_ylabel("Runtime rata-rata per run (detik, log)")
+        axes[1, col].set_ylabel("Kualitas solusi (% dari best-known)")
+        for ax in axes[:, col]:
+            ax.set_title(f"Skenario {sc}"); ax.set_xlabel("Ukuran instance n (termasuk Depot)")
+            ax.set_xticks(sorted(s.n.unique())); ax.grid(alpha=.3); ax.legend(title="Algoritma")
+    fig.suptitle("Skalabilitas: runtime dan kualitas solusi terhadap ukuran instance")
+    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+
+
+SENSITIVITY_LABEL = {"time_limit_hours": "Batas waktu misi T_max (jam)", "decay_g0": "Laju decay dasar g0 (per jam)"}
+
+
+def sensitivity(table, algorithms, path):
+    """Top row: mean fitness (+-1 std) per algorithm vs the swept value; bottom row: nodes visited.
+    One column per swept parameter."""
+    params = list(dict.fromkeys(table.parameter))
+    fig, axes = plt.subplots(2, len(params), figsize=(6 * len(params), 8), squeeze=False)
+    for col, p in enumerate(params):
+        s = table[table.parameter == p]
+        for a in algorithms:
+            c = s[s.algorithm == a].sort_values("value")
+            axes[0, col].errorbar(c.value, c["mean"], yerr=c["std"], marker="o", capsize=3, label=a)
+            axes[1, col].plot(c.value, c.visited_mean, marker="o", label=a)
+        axes[0, col].set_ylabel("Fitness akhir rata-rata (total Prize)")
+        axes[1, col].set_ylabel("Node dikunjungi rata-rata")
+        for ax in axes[:, col]:
+            ax.set_xlabel(SENSITIVITY_LABEL.get(p, p)); ax.set_xticks(sorted(s.value.unique()))
+            ax.grid(alpha=.3); ax.legend(title="Algoritma")
+        axes[0, col].set_title(f"Sensitivitas terhadap {SENSITIVITY_LABEL.get(p, p).split(' (')[0]}")
+    n, sc, seeds = int(table.n.iloc[0]), table.scenario.iloc[0], int(table.runs.max())
+    fig.suptitle(f"Analisis sensitivitas (n = {n}, skenario {sc}, {seeds} seed; parameter lain tetap default)")
+    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)

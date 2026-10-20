@@ -1,0 +1,12 @@
+language: id
+depot: Riau
+speed_kmh: 200
+detour_factor: 1.15
+dwell_hours: 1.0
+time_limit_hours: 72
+gamma: 0.8
+weights: {hist: 0.4, cur: 0.3, ops: 0.3}
+decay_g0: 0.01
+decay_kappa: 1.0
+fitness_evaluations: 50000
+seeds: 30

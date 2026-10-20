@@ -186,6 +186,29 @@ CAPTIONS = {
                          "success rate per algoritma, n, dan Skenario tahun.",
     "tables/wilcoxon_holm.md": "Uji Wilcoxon signed-rank berpasangan per seed dengan koreksi Holm untuk setiap "
                                "pasangan algoritma.",
+    # Fase 2: Klaster hotspot FIRMS (#6)
+    "figures/scalability_combined.png": "Skalabilitas gabungan: runtime per run (log) dan kualitas (% best-known) "
+                                        "terhadap jumlah node kandidat, instance provinsi skenario 2026 (garis "
+                                        "penuh) dan instance FIRMS k=50/100/200 (garis putus-putus, area berlabel).",
+    "figures/firms_cluster_map_k100.png": "Peta hotspot VIIRS dan 100 Klaster hotspot (warna = Risiko) dengan rute "
+                                          "terbaik, nomor urut, Node dilewati, dan Depot Pekanbaru.",
+    "figures/firms_boxplot_fitness.png": "Sebaran fitness akhir 30 seed per algoritma untuk setiap k instance FIRMS.",
+    "tables/firms_calibration.md": "Kalibrasi Batas waktu misi FIRMS: node terkunjungi Greedy pada k=100 untuk "
+                                   "setiap kandidat batas waktu.",
+    **{f"tables/firms_clusters_k{k}.md": f"Daftar {k} Klaster hotspot: lokasi, wilayah, jumlah hotspot, Σ FRP, dan "
+                                         "Risiko." for k in (50, 100, 200)},
+    "tables/firms_hc_cost.md": "Biaya Steepest-Ascent HC: ukuran neighbourhood O(n²) terhadap budget evaluasi, "
+                               "restart dan langkah naik HC, serta µs per evaluasi, untuk instance provinsi dan "
+                               "FIRMS.",
+    "tables/firms_instances.md": "Ringkasan instance FIRMS: jumlah hotspot, Σ FRP, Batas waktu misi, budget, dan "
+                                 "node terkunjungi Greedy per k.",
+    "tables/firms_ranking.md": "Pernyataan apakah peringkat algoritma instance provinsi tetap berlaku pada "
+                               "instance FIRMS, dengan peringkat per instance.",
+    "tables/firms_summary.md": "Ringkasan 30 seed per algoritma per k instance FIRMS (best/mean/std/median, "
+                               "runtime, success rate).",
+    "tables/firms_wilcoxon_holm.md": "Uji Wilcoxon-Holm berpasangan per seed untuk setiap pasangan algoritma per k "
+                                     "instance FIRMS.",
+    "tables/scalability_combined.md": "Data grafik skalabilitas gabungan provinsi + FIRMS.",
 }
 
 DOCS = ("README.md", "DATA_PROVENANCE.md", "CHANGELOG.md", "reports/figures_index.md", "docs/laporan/*.md")

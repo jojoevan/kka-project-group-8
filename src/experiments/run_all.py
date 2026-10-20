@@ -2,6 +2,12 @@
 and the follow-up analyses (convergence, scalability, sensitivity sweep, decay ablation, case study).
 
     python -m src.experiments.run_all --config config.yaml [--quick] [--out results] [--workers K]
+                                      [--firms | --firms-only]
+
+--firms adds phase 2 (Klaster hotspot FIRMS, see src/experiments/firms_phase.py) after the province
+experiment; --firms-only runs just phase 2 and reads the province runs from <out>/raw/runs.csv. Phase 2
+is skipped with a log message if the FIRMS snapshot is missing. A full run into results/ refreshes the
+generated documentation blocks (python -m src.docs_gen).
 
 Writes (under --out): raw/runs.csv (one row per run), raw/histories.jsonl.gz (convergence history per
 run), raw/sensitivity_runs.csv, tables/{summary,optimality_gap,wilcoxon_holm,instances,scalability,
@@ -169,52 +175,6 @@ ABLATION_SEEDS_ID = {"algorithm": "algoritma", "seeds": "jumlah seed",
                      "seeds_static_worse": "seed dengan rute tanpa decay lebih buruk"}
 
 
-FIRMS_INDEX = (
-    "\n## Fase 2: Klaster hotspot FIRMS (snapshot VIIRS S-NPP 7 hari, diunduh 2026-10-20 UTC)\n\n"
-    "- `results/figures/scalability_combined.png`: Skalabilitas gabungan: runtime per run (log) dan kualitas "
-    "(% best-known) terhadap jumlah node kandidat untuk instance provinsi (skenario 2026, garis penuh) dan "
-    "instance FIRMS k=50/100/200 (garis putus-putus, area berlabel) (tabel: `results/tables/scalability_combined.md`).\n"
-    "- `results/figures/firms_cluster_map_k100.png`: Peta sebaran hotspot dan 100 Klaster hotspot (warna = Risiko) "
-    "dengan rute terbaik, nomor urut, Node dilewati, dan Depot Pekanbaru (rute: `results/routes/best_route_firms_k100.json`).\n"
-    "- `results/figures/firms_boxplot_fitness.png`: Sebaran fitness akhir 30 seed per algoritma untuk tiap k FIRMS.\n"
-    "\n### Tabel FIRMS\n\n"
-    "- `results/tables/firms_instances.md`, `results/tables/firms_calibration.md`: ukuran instance, jumlah hotspot, "
-    "dan kalibrasi Batas waktu misi (greedy k=100).\n"
-    "- `results/tables/firms_summary.md`, `results/tables/firms_wilcoxon_holm.md`: ringkasan 30 seed dan uji "
-    "Wilcoxon-Holm per k.\n"
-    "- `results/tables/firms_ranking.md`: pernyataan apakah peringkat algoritma instance provinsi tetap berlaku "
-    "pada instance FIRMS.\n"
-    "- `results/tables/firms_hc_cost.md`: ukuran neighbourhood Steepest-Ascent HC (O(n²)) terhadap budget evaluasi, "
-    "restart dan langkah naik HC, serta waktu per evaluasi.\n"
-    "- `results/tables/firms_clusters_k{50,100,200}.md`: daftar klaster (lokasi, jumlah hotspot, Σ FRP, Risiko).\n")
-
-
-def write_figures_index(firms):
-    """reports/figures_index.md for a full run; the FIRMS section only if the FIRMS phase produced output."""
-    text = (
-            "# Daftar gambar\n\n"
-            "- `results/figures/boxplot_fitness_n{6,10,15,25,38}.png`: Sebaran fitness akhir 30 seed per "
-            "algoritma (Greedy, HC, SA, GA) untuk tiap n, satu panel per Skenario tahun.\n"
-            "- `results/figures/convergence_n{25,38}.png`: Kurva konvergensi (fitness terbaik sejauh ini, "
-            "rata-rata ± simpangan baku 30 seed) terhadap jumlah evaluasi, per algoritma dan Skenario tahun.\n"
-            "- `results/figures/scalability.png`: Runtime per run (skala log) dan kualitas solusi (% best-known) "
-            "terhadap ukuran instance n, per algoritma dan Skenario tahun.\n"
-            "- `results/figures/sensitivity.png`: Sensitivitas fitness akhir dan jumlah Kunjungan terhadap Batas "
-            "waktu misi (24/48/72/120 jam) dan g0 (0/0,005/0,01/0,02), n=38 skenario 2026, 30 seed "
-            "(tabel: `results/tables/sensitivity.md`).\n"
-            "- `results/figures/best_route_map.png`: Peta studi kasus rute terbaik skenario 2026 n=38: Depot, panah "
-            "arah, nomor urut, waktu tiba, dan Node dilewati (tabel: `results/tables/case_study_route.md`).\n"
-            "\n## Tabel analisis lanjutan (tanpa gambar)\n\n"
-            "- `results/tables/decay_ablation_routes.md`: Rute terbaik dengan decay vs dengan g0=0, keduanya "
-            "dievaluasi dengan dan tanpa decay; Prize hilang bila decay diabaikan.\n"
-            "- `results/tables/decay_ablation_order.md`: Urutan dan waktu tiba tiap provinsi pada kedua rute.\n"
-            "- `results/tables/decay_ablation_seeds.md`: Prize hilang per algoritma, berpasangan per seed.\n"
-            "- `results/tables/scalability.md`, `results/tables/convergence.csv`: data grafik skalabilitas dan "
-            "kurva konvergensi.\n")
-    if firms: text += FIRMS_INDEX
-    (ROOT / "reports" / "figures_index.md").write_text(text, encoding="utf8")
-
-
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Eksperimen perbandingan utama")
     ap.add_argument("--config", default=str(ROOT / "config.yaml"))
@@ -248,12 +208,12 @@ def _run(cfg, args, out, t_start):
         if runs is None: log.info("Hasil provinsi (%s) tidak ada; grafik gabungan hanya memuat FIRMS", prov_csv)
     else:
         runs = _run_province(cfg, args, out, coords)
-    firms_done = False
     if args.firms or args.firms_only:
-        firms_done = firms_phase.run(cfg, args.quick, args.workers, out, ROOT, coords, runs, log, write_table,
+        firms_phase.run(cfg, args.quick, args.workers, out, ROOT, coords, runs, log, write_table,
                                      HEURISTICS)
-    if not args.quick:
-        write_figures_index(firms_done or (out / "raw" / "firms_runs.csv").exists())
+    if not args.quick and out.resolve() == (ROOT / "results").resolve():
+        from src import docs_gen  # AUTO blocks (daftar gambar, ringkasan) of README/docs from results/
+        docs_gen.main([])
     _finish(t_start, out)
 
 

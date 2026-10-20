@@ -1,21 +1,30 @@
+"""Steepest-Ascent Hill Climbing with random restarts until the evaluation budget is used up."""
+from .common import BudgetExhausted, Tracker, algorithm_rng, all_moves, apply_move, candidates, initial_permutation
 
-import time, numpy as np
-from .common import neighbours, result
-def solve(inst,budget=20000,seed=0,restarts=3):
-    rng=np.random.default_rng(seed); start=time.perf_counter(); n=len(inst.names)-1
-    best=list(rng.permutation(np.arange(1,n+1))); bestv=inst.evaluate(best); evals=1; hist=[(evals,bestv)]
-    per=max(1,budget//max(1,restarts))
-    for r in range(restarts):
-        cur=list(rng.permutation(np.arange(1,n+1))) if r else best.copy()
-        cv=inst.evaluate(cur); evals+=1
-        improved=True
-        while improved and evals<budget and evals < (r+1)*per:
-            improved=False; local=cur; lv=cv
-            for q in neighbours(cur):
-                v=inst.evaluate(q); evals+=1
-                if v>lv+1e-12: local,lv=q,v
-                if evals>=budget or evals >= (r+1)*per: break
-            if lv>cv+1e-12: cur,cv=local,lv; improved=True
-            if cv>bestv: best,bestv=cur.copy(),cv
-            hist.append((evals,bestv))
-    return result(inst,best,hist,start,evals)
+
+def solve(inst, budget=20000, seed=0):
+    """Each step evaluates the full shared neighbourhood (O(n^2) evaluations) and takes the best
+    improving neighbour; at a local optimum it restarts from a random permutation. The first start is
+    the shared initial permutation; its local optimum is logged as single_start_fitness."""
+    tracker = Tracker(inst, budget); rng = algorithm_rng(seed); nodes = candidates(inst)
+    start = initial_permutation(inst, seed); moves = all_moves(len(nodes))
+    restarts = 0; single_start = None; cur = start
+    try:
+        while True:
+            cv = tracker.evaluate(cur); restarts += 1
+            try:
+                while True:
+                    best_q, best_v = None, cv
+                    for m in moves:
+                        q = apply_move(cur, m); v = tracker.evaluate(q)
+                        if v > best_v + 1e-12: best_q, best_v = q, v
+                    if best_q is None: break  # local optimum
+                    cur, cv = best_q, best_v
+            finally:
+                if single_start is None: single_start = cv
+            if not moves: break
+            cur = [int(x) for x in rng.permutation(nodes)]
+    except BudgetExhausted:
+        pass
+    return tracker.result(start, restarts=restarts, single_start_fitness=float(single_start),
+                          neighbourhood_size=len(moves))

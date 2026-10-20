@@ -22,6 +22,7 @@ from src.algorithms import SOLVERS  # noqa: E402
 from src.config import load_config, province_instance  # noqa: E402
 from src.data_prep import prepare  # noqa: E402
 from src.instance import INSTANCE_SIZES, Instance  # noqa: E402
+from src.numfmt import id_format  # noqa: E402
 
 TABLES = ROOT / "results" / "tables"
 ROUTES = ROOT / "results" / "routes"
@@ -35,12 +36,12 @@ COLORS = {"Greedy": "#7f7f7f", "HC": "#1f77b4", "SA": "#d62728", "GA": "#2ca02c"
 ALGORITHM_NAMES = {"Greedy": "Greedy (baseline)", "HC": "Steepest-Ascent Hill Climbing",
                    "SA": "Simulated Annealing", "GA": "Genetic Algorithm", "Exact": "Exact (brute force)"}
 
-_SWAP = str.maketrans(".,", ",.")
+SEPARATORS = ",."  # Plotly layout.separators: decimal comma, dot thousands separator
 
 
 def fmt(x, spec=".3f"):
     """Indonesian number format: decimal comma, dot thousands separator."""
-    return format(x, spec).translate(_SWAP)
+    return id_format(x, spec)
 
 
 @st.cache_resource

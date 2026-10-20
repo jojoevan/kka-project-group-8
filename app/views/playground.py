@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app import charts
-from app.core import (ALGORITHM_NAMES, ALGORITHMS, COLORS, EXACT_MAX_NODES, SCENARIOS, SIZES, best_known, config,
+from app.core import (ALGORITHM_NAMES, ALGORITHMS, COLORS, EXACT_MAX_NODES, SCENARIOS, SEPARATORS, SIZES, best_known, config,
                       experiment_budget, fmt, instance, run, term)
 from app.views.problem import positions
 
@@ -80,7 +80,8 @@ def _diagnostics(alg, result, n):
             fig = go.Figure(go.Scatter(x=[e for e, _ in trace], y=[t for _, t in trace], mode="lines",
                                        line=dict(color=COLORS["SA"])))
             fig.update_xaxes(title="Evaluasi"); fig.update_yaxes(title="Suhu T", type="log")
-            fig.update_layout(title="Jadwal pendinginan SA", height=280, margin=dict(l=10, r=10, t=40, b=10))
+            fig.update_layout(title="Jadwal pendinginan SA", height=280, margin=dict(l=10, r=10, t=40, b=10),
+                              separators=SEPARATORS)
             st.plotly_chart(fig, width="stretch")
     elif alg == "GA":
         c = st.columns(2)

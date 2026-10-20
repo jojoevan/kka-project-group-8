@@ -3,7 +3,7 @@ so they render without an internet connection."""
 import numpy as np
 import plotly.graph_objects as go
 
-from app.core import ALGORITHMS, COLORS, fmt
+from app.core import ALGORITHMS, COLORS, SEPARATORS, fmt
 
 MAX_FRAMES = 60
 
@@ -12,7 +12,7 @@ def _axes(fig, height=520):
     fig.update_xaxes(title="Bujur (°BT)", showgrid=True, gridcolor="#eee", zeroline=False)
     fig.update_yaxes(title="Lintang (°)", showgrid=True, gridcolor="#eee", zeroline=False,
                      scaleanchor="x", scaleratio=1)
-    fig.update_layout(height=height, margin=dict(l=10, r=10, t=40, b=10), plot_bgcolor="#f7fbff",
+    fig.update_layout(height=height, separators=SEPARATORS, margin=dict(l=10, r=10, t=40, b=10), plot_bgcolor="#f7fbff",
                       legend=dict(orientation="h", yanchor="bottom", y=1.01, x=0))
     return fig
 
@@ -105,7 +105,7 @@ def convergence(series, title="", log_x=True, band=None):
         fig.add_scatter(x=x, y=y, mode="lines", name=alg, line=dict(color=c, width=2, shape="hv"))
     fig.update_xaxes(title="Evaluasi fitness yang sudah dipakai", type="log" if log_x else "linear")
     fig.update_yaxes(title="Fitness terbaik sejauh ini")
-    fig.update_layout(title=title, height=400, margin=dict(l=10, r=10, t=40, b=10), hovermode="x unified")
+    fig.update_layout(title=title, separators=SEPARATORS, height=400, margin=dict(l=10, r=10, t=40, b=10), hovermode="x unified")
     return fig
 
 
@@ -119,7 +119,7 @@ def prize_decay(t_max, g0, kappa, risk, ops_values):
     fig.add_hline(y=risk, line=dict(dash="dot", color="#999"), annotation_text="Risiko (tiba di jam 0)")
     fig.update_xaxes(title="Waktu tiba (jam sejak berangkat dari Depot)")
     fig.update_yaxes(title="Prize yang didapat", range=[0, risk * 1.08])
-    fig.update_layout(height=380, margin=dict(l=10, r=10, t=30, b=10), hovermode="x unified")
+    fig.update_layout(height=380, separators=SEPARATORS, margin=dict(l=10, r=10, t=30, b=10), hovermode="x unified")
     return fig
 
 
@@ -131,7 +131,7 @@ def boxplot(df, value="fitness", by="algorithm", title="", reference=None):
     if reference is not None:
         fig.add_hline(y=reference, line=dict(dash="dash", color="#333"), annotation_text="Best-known")
     fig.update_yaxes(title="Fitness (total Prize)")
-    fig.update_layout(title=title, height=400, margin=dict(l=10, r=10, t=40, b=10), showlegend=False)
+    fig.update_layout(title=title, separators=SEPARATORS, height=400, margin=dict(l=10, r=10, t=40, b=10), showlegend=False)
     return fig
 
 
@@ -142,5 +142,5 @@ def lines(df, x, y, group, x_title, y_title, title="", log_x=False):
         fig.add_scatter(x=d[x], y=d[y], mode="lines+markers", name=alg, line=dict(color=COLORS[alg], width=2))
     fig.update_xaxes(title=x_title, type="log" if log_x else "linear")
     fig.update_yaxes(title=y_title)
-    fig.update_layout(title=title, height=380, margin=dict(l=10, r=10, t=40, b=10), hovermode="x unified")
+    fig.update_layout(title=title, separators=SEPARATORS, height=380, margin=dict(l=10, r=10, t=40, b=10), hovermode="x unified")
     return fig

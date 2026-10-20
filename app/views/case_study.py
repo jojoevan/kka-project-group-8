@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app import charts
-from app.core import COLORS, config, fmt, instance, saved_route, table, term
+from app.core import COLORS, SEPARATORS, config, fmt, instance, saved_route, table, term
 from app.views.problem import positions
 
 
@@ -52,7 +52,7 @@ def render():
                         textposition="middle left")
     fig.update_yaxes(title="Urutan kunjungan", autorange="reversed")
     fig.update_layout(title="Provinsi ber-data operasional (decay lebih cepat) dikunjungi jauh lebih awal",
-                      height=420, margin=dict(l=10, r=10, t=40, b=10), showlegend=False)
+                      height=420, margin=dict(l=10, r=10, t=40, b=10), showlegend=False, separators=SEPARATORS)
     left, right = st.columns([3, 2])
     left.plotly_chart(fig, width="stretch")
     seeds = table("decay_ablation_seeds")
@@ -60,7 +60,7 @@ def render():
                            text=[f"{fmt(v, '.1f')}%" for v in seeds.prize_lost_mean_pct], textposition="outside"))
     bar.update_yaxes(title="Prize hilang rata-rata (%)")
     bar.update_layout(title="Prize yang hilang jika decay diabaikan (30 seed)", height=420,
-                      margin=dict(l=10, r=10, t=40, b=10))
+                      margin=dict(l=10, r=10, t=40, b=10), separators=SEPARATORS)
     right.plotly_chart(bar, width="stretch")
 
     st.header("Sensitivitas parameter")

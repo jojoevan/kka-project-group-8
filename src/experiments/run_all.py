@@ -10,11 +10,8 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 from src.data_prep import prepare, SCENARIOS, OPS_SCENARIO
 from src.instance import build_instance, INSTANCE_SIZES
-from src.algorithms.common import greedy
-from src.algorithms.hill_climbing import solve as hc
-from src.algorithms.simulated_annealing import solve as sa
-from src.algorithms.genetic_algorithm import solve as ga
-from src.algorithms.exact import solve as exact
+from src.algorithms import SOLVERS
+from src.algorithms.exact import MAX_NODES as EXACT_MAX_NODES
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--quick",action="store_true")
@@ -32,18 +29,15 @@ def main():
             inst=build_instance(f,coords,n=n,scenario=year,depot_name=cfg["depot"],speed=cfg["speed_kmh"],
                                 detour=cfg["detour_factor"],dwell=cfg["dwell_hours"],time_limit=cfg["time_limit_hours"],
                                 g0=cfg["decay_g0"],kappa=cfg["decay_kappa"])
-            algos={"Greedy":lambda seed:greedy(inst,seed=seed),
-                   "HC":lambda seed:hc(inst,budget=budget,seed=seed,restarts=2 if args.quick else 5),
-                   "SA":lambda seed:sa(inst,budget=budget,seed=seed),
-                   "GA":lambda seed:ga(inst,budget=budget,seed=seed,population=20 if args.quick else 100)}
+            algos={name:(lambda seed,fn=SOLVERS[name]:fn(inst,budget=budget,seed=seed)) for name in ("Greedy","HC","SA","GA")}
             for seed in range(seeds):
                 for name,fn in algos.items():
                     res=fn(seed); rows.append({"scenario":year,"n":n,"seed":seed,"algorithm":name,
                         "fitness":res["best_fitness"],"runtime_s":res["runtime"],"evals":res["evals"]})
                     if seed==0:
                         cases.append((year,n,name,res))
-            if n<=9:
-                ex=exact(inst,max_n=9)
+            if n<=EXACT_MAX_NODES:
+                ex=SOLVERS["Exact"](inst,budget=10**7,seed=0)
                 rows.append({"scenario":year,"n":n,"seed":0,"algorithm":"Exact","fitness":ex["best_fitness"],
                              "runtime_s":ex["runtime"],"evals":ex["evals"]})
     raw=pd.DataFrame(rows); raw.to_csv(out/"raw"/"runs.csv",index=False)

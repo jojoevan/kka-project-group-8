@@ -3,7 +3,7 @@ depot: Riau
 speed_kmh: 200
 detour_factor: 1.15
 dwell_hours: 1.0
-time_limit_hours: 72
+time_limit_hours: 72  # Batas waktu misi; dikalibrasi greedy n=38 skenario 2026 (python -m src.calibration)
 gamma: 0.8
 weights: {hist: 0.4, cur: 0.3, ops: 0.3}
 decay_g0: 0.01

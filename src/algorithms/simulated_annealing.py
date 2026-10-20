@@ -1,20 +1,37 @@
+"""Simulated Annealing over the shared move set with auto-calibrated T0 and budget-derived cooling."""
+import math
+import numpy as np
+from .common import BudgetExhausted, Tracker, algorithm_rng, apply_move, candidates, initial_permutation, random_move
 
-import time, math, numpy as np
-from .common import neighbours, result
-def solve(inst,budget=20000,seed=0,cooling=.995):
-    rng=np.random.default_rng(seed); start=time.perf_counter(); n=len(inst.names)-1
-    cur=list(rng.permutation(np.arange(1,n+1))); cv=inst.evaluate(cur); best=cur.copy(); bv=cv; evals=1
-    diffs=[]
-    for _ in range(min(100,max(10,n*3))):
-        q=cur.copy(); i,j=rng.choice(n,2,replace=False); q[i],q[j]=q[j],q[i]; diffs.append(abs(inst.evaluate(q)-cv))
-    positive=[d for d in diffs if d>0]; T=max(np.mean(positive) if positive else .01,.001)
-    hist=[(evals,bv)]; accepted=0
-    while evals<budget:
-        i,j=rng.choice(n,2,replace=False); q=cur.copy(); q[i],q[j]=q[j],q[i]
-        v=inst.evaluate(q); evals+=1; delta=v-cv
-        if delta>=0 or rng.random()<math.exp(max(-700,delta/max(T,1e-12))):
-            cur,cv=q,v; accepted+=1
-        if cv>bv: best,bv=cur.copy(),cv
-        T*=cooling
-        if evals%max(1,budget//200)==0: hist.append((evals,bv))
-    return result(inst,best,hist,start,evals)
+FINAL_TEMPERATURE_RATIO = 1e-3  # T_end ~= 0.001 * T0 when the budget is used up
+CALIBRATION_MOVES = 100
+TRACE_POINTS = 200
+
+
+def solve(inst, budget=20000, seed=0):
+    """T0 = mean positive |delta| of random moves from the start (these evaluations count towards the
+    budget); geometric cooling c = ratio^(1/steps) over the remaining budget. No reheating."""
+    tracker = Tracker(inst, budget); rng = algorithm_rng(seed); n = len(candidates(inst))
+    start = initial_permutation(inst, seed)
+    T0 = T = cooling = None; accepted = steps = 0; trace = []
+    try:
+        cur = start; cv = tracker.evaluate(cur)
+        if n < 2: raise BudgetExhausted
+        deltas = [abs(tracker.evaluate(apply_move(cur, random_move(n, rng))) - cv)
+                  for _ in range(min(CALIBRATION_MOVES, max(1, (budget - 1) // 10)))]
+        positive = [d for d in deltas if d > 0]
+        T0 = T = float(np.mean(positive)) if positive else 1e-3
+        total = tracker.remaining; cooling = FINAL_TEMPERATURE_RATIO ** (1 / max(total, 1))
+        every = max(1, total // TRACE_POINTS)
+        trace.append((tracker.evals, T))
+        while True:
+            q = apply_move(cur, random_move(n, rng)); v = tracker.evaluate(q); steps += 1
+            delta = v - cv
+            if delta >= 0 or rng.random() < math.exp(delta / T):
+                cur, cv = q, v; accepted += 1
+            T *= cooling
+            if steps % every == 0: trace.append((tracker.evals, T))
+    except BudgetExhausted:
+        pass
+    return tracker.result(start, T0=T0, cooling=cooling, final_temperature=T,
+                          acceptance_rate=accepted / steps if steps else 0., temperature_trace=trace)

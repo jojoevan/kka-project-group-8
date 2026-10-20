@@ -1,31 +1,46 @@
+"""Genetic Algorithm: random population, tournament selection, Order Crossover, shared-move mutation,
+elitism. The first individual is the shared initial permutation; no greedy seeding."""
+from .common import BudgetExhausted, Tracker, algorithm_rng, apply_move, candidates, initial_permutation, random_move
 
-import time, numpy as np
-from .common import result, greedy
-def ox(a,b,rng):
-    n=len(a); i,j=sorted(rng.choice(n,2,replace=False)); child=[None]*n
-    child[i:j+1]=a[i:j+1]; fill=[x for x in b if x not in child]; k=(j+1)%n
-    for x in fill:
-        while child[k] is not None:k=(k+1)%n
-        child[k]=x
+POPULATION = 100
+TOURNAMENT = 3
+MUTATION = .2
+ELITES = 2
+
+
+def order_crossover(a, b, rng):
+    """OX: keep a[i..j] in place, fill the other positions in b's order starting after j."""
+    n = len(a); i, j = sorted(int(x) for x in rng.choice(n, 2, replace=False))
+    child = [None] * n; child[i:j + 1] = a[i:j + 1]; kept = set(a[i:j + 1])
+    fill = [x for x in b[j + 1:] + b[:j + 1] if x not in kept]
+    for k, x in zip([(j + 1 + s) % n for s in range(n - (j - i + 1))], fill): child[k] = x
     return child
-def solve(inst,budget=20000,seed=0,population=60,mutation=.2,memetic_seed=True):
-    rng=np.random.default_rng(seed); start=time.perf_counter(); n=len(inst.names)-1
-    pop=[list(rng.permutation(np.arange(1,n+1))) for _ in range(population)]
-    if memetic_seed:
-        gp=greedy(inst).get("best_perm",[])
-        pop[0]=gp+[x for x in range(1,n+1) if x not in gp]
-    vals=[inst.evaluate(p) for p in pop]; evals=len(pop); bi=int(np.argmax(vals)); best=pop[bi].copy(); bv=vals[bi]; hist=[(evals,bv)]
-    while evals<budget:
-        new=[best.copy()]
-        while len(new)<population and evals+len(new)<budget:
-            def tourney():
-                ids=rng.integers(0,len(pop),size=3); return pop[max(ids,key=lambda z:vals[z])]
-            child=ox(tourney(),tourney(),rng)
-            if rng.random()<mutation:
-                i,j=sorted(rng.choice(n,2,replace=False)); child[i:j+1]=reversed(child[i:j+1])
-            new.append(child)
-        pop=new; vals=[inst.evaluate(p) for p in pop]; evals+=len(pop)
-        bi=int(np.argmax(vals))
-        if vals[bi]>bv: best,bv=pop[bi].copy(),vals[bi]
-        hist.append((evals,bv))
-    return result(inst,best,hist,start,min(evals,budget))
+
+
+def solve(inst, budget=20000, seed=0):
+    """Each child costs one evaluation; elites carry their fitness over without re-evaluation."""
+    tracker = Tracker(inst, budget); rng = algorithm_rng(seed); nodes = candidates(inst); n = len(nodes)
+    start = initial_permutation(inst, seed)
+    initial = [start] + [[int(x) for x in rng.permutation(nodes)] for _ in range(POPULATION - 1)]
+    pop, vals = [], []; generations = 0
+    try:
+        for p in initial:
+            vals.append(tracker.evaluate(p)); pop.append(p)
+        if n < 2: raise BudgetExhausted
+
+        def tournament():
+            ids = rng.integers(0, len(pop), size=TOURNAMENT)
+            return pop[max(ids, key=lambda z: vals[z])]
+
+        while True:
+            order = sorted(range(len(pop)), key=lambda z: -vals[z])
+            new = [pop[z] for z in order[:ELITES]]; new_vals = [vals[z] for z in order[:ELITES]]
+            while len(new) < POPULATION:
+                child = order_crossover(tournament(), tournament(), rng)
+                if rng.random() < MUTATION: child = apply_move(child, random_move(n, rng))
+                new_vals.append(tracker.evaluate(child)); new.append(child)
+            pop, vals = new, new_vals; generations += 1
+    except BudgetExhausted:
+        pass
+    return tracker.result(start, population=POPULATION, generations=generations,
+                          initial_population=initial)

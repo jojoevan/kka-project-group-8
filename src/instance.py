@@ -24,27 +24,32 @@ class Instance:
     g0: float=.01
     kappa: float=1.
     def evaluate(self, perm, details=False):
-        t=0.; prev=self.depot; prize=0.; route=[]; seen=set()
+        """Total Prize of a candidate order, in O(n).
+
+        Nodes are tried in order; a Node dilewati (one that no longer fits, including the return to
+        the Depot) is dropped and the next node is still tried. Repeats and the Depot are ignored.
+        With details=True also returns the route detail used for case studies.
+        """
+        t=0.; prev=self.depot; prize=0.; dist=0.; route=[]; seen=set()
         for raw in perm:
             i=int(raw)
             if i==self.depot or i in seen: continue
             leg=self.dist[prev,i]/self.speed
             return_leg=self.dist[i,self.depot]/self.speed
             if t+leg+self.dwell+return_leg > self.time_limit+1e-9: continue
-            t += leg; arrival=t
+            t += leg; arrival=t; dist += self.dist[prev,i]
             p=float(self.risk[i]*np.exp(-self.g0*(1+self.kappa*self.ops[i])*arrival))
             prize += p
-            route.append({"index":i,"province":self.names[i],"arrival_h":arrival,"prize":p,"risk":float(self.risk[i])})
+            if details:
+                route.append({"index":i,"province":self.names[i],"arrival_h":arrival,"prize":p,"risk":float(self.risk[i])})
             t += self.dwell; prev=i; seen.add(i)
-        seq=[self.depot]+[x["index"] for x in route]+[self.depot]
-        total_dist=sum(self.dist[a,b] for a,b in zip(seq[:-1],seq[1:]))
+        if not details: return float(prize)
+        dist += self.dist[prev,self.depot]
         mission=t+(self.dist[prev,self.depot]/self.speed)
-        if details:
-            visited={x["index"] for x in route}
-            return {"route":route,"fitness":prize,"distance_km":float(total_dist),"mission_time_h":float(mission),
-                    "remaining_time_h":float(self.time_limit-mission),
-                    "skipped":[{"province":self.names[i],"risk":float(self.risk[i])} for i in range(1,len(self.names)) if i not in visited]}
-        return float(prize)
+        skipped=[{"index":i,"province":self.names[i],"risk":float(self.risk[i])}
+                 for i in range(len(self.names)) if i!=self.depot and i not in seen]
+        return {"route":route,"fitness":float(prize),"distance_km":float(dist),"mission_time_h":float(mission),
+                "remaining_time_h":float(self.time_limit-mission),"skipped":skipped}
 
 INSTANCE_SIZES=(6,10,15,25,38)
 OPS_INSTANCE_SIZE=6  # the instance of provinces with operational data

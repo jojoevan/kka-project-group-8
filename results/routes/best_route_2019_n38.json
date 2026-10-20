@@ -1,0 +1,247 @@
+{
+  "scenario": "2019",
+  "n": 38,
+  "algorithm": "HC",
+  "seed": 13,
+  "route": [
+    {
+      "index": 18,
+      "province": "Sumatera Barat",
+      "arrival_h": 1.168759715779437,
+      "prize": 0.6823235056844119,
+      "risk": 0.6903450127102718
+    },
+    {
+      "index": 12,
+      "province": "Jambi",
+      "arrival_h": 4.294877622987828,
+      "prize": 0.7551427674466351,
+      "risk": 0.7882817711614749
+    },
+    {
+      "index": 4,
+      "province": "Sumatera Selatan",
+      "arrival_h": 6.434028065052544,
+      "prize": 0.8645342487677995,
+      "risk": 0.9219870720681866
+    },
+    {
+      "index": 21,
+      "province": "Bangka Belitung",
+      "arrival_h": 8.45869782153769,
+      "prize": 0.6123318693257761,
+      "risk": 0.6663808699563772
+    },
+    {
+      "index": 2,
+      "province": "Kalimantan Barat",
+      "arrival_h": 11.91621129534817,
+      "prize": 0.8375958660146172,
+      "risk": 0.9435957438560101
+    },
+    {
+      "index": 5,
+      "province": "Kalimantan Tengah",
+      "arrival_h": 16.164439991039227,
+      "prize": 0.7826032652196251,
+      "risk": 0.9199048878706572
+    },
+    {
+      "index": 6,
+      "province": "Kalimantan Selatan",
+      "arrival_h": 17.99314595849237,
+      "prize": 0.7415863504229658,
+      "risk": 0.8877792041400149
+    },
+    {
+      "index": 8,
+      "province": "Kalimantan Timur",
+      "arrival_h": 21.427581991930023,
+      "prize": 0.6882117460969542,
+      "risk": 0.8526698108979383
+    },
+    {
+      "index": 24,
+      "province": "Sulawesi Barat",
+      "arrival_h": 24.21065008126058,
+      "prize": 0.49573086949575706,
+      "risk": 0.6315263572522553
+    },
+    {
+      "index": 14,
+      "province": "Sulawesi Tengah",
+      "arrival_h": 26.50965853800138,
+      "prize": 0.5812017333368578,
+      "risk": 0.7576295148081882
+    },
+    {
+      "index": 27,
+      "province": "Gorontalo",
+      "arrival_h": 29.747374019049932,
+      "prize": 0.401652177063333,
+      "risk": 0.5408057857075376
+    },
+    {
+      "index": 26,
+      "province": "Sulawesi Utara",
+      "arrival_h": 32.0312629171588,
+      "prize": 0.4161003352300608,
+      "risk": 0.5732024962077304
+    },
+    {
+      "index": 28,
+      "province": "Maluku Utara",
+      "arrival_h": 34.837748467288606,
+      "prize": 0.36515856904468774,
+      "risk": 0.5173445945502607
+    },
+    {
+      "index": 7,
+      "province": "Maluku",
+      "arrival_h": 38.70319430246791,
+      "prize": 0.5825680749713888,
+      "risk": 0.8578918036289953
+    },
+    {
+      "index": 13,
+      "province": "Sulawesi Tenggara",
+      "arrival_h": 43.32442140322784,
+      "prize": 0.49965360705964645,
+      "risk": 0.7705921817591376
+    },
+    {
+      "index": 15,
+      "province": "Sulawesi Selatan",
+      "arrival_h": 46.4274086695726,
+      "prize": 0.4656888564723907,
+      "risk": 0.7408452824222387
+    },
+    {
+      "index": 3,
+      "province": "Nusa Tenggara Barat",
+      "arrival_h": 50.464327092794214,
+      "prize": 0.5571466148210207,
+      "risk": 0.9228546057388551
+    },
+    {
+      "index": 29,
+      "province": "Bali",
+      "arrival_h": 52.03502660981171,
+      "prize": 0.2568514633498459,
+      "risk": 0.43218261563015525
+    },
+    {
+      "index": 9,
+      "province": "Jawa Timur",
+      "arrival_h": 54.83708654807752,
+      "prize": 0.48362310221881766,
+      "risk": 0.8368767055299465
+    },
+    {
+      "index": 20,
+      "province": "Jawa Tengah",
+      "arrival_h": 57.32616472101685,
+      "prize": 0.37941688716061156,
+      "risk": 0.6731022258642295
+    },
+    {
+      "index": 16,
+      "province": "Jawa Barat",
+      "arrival_h": 60.11004554214276,
+      "prize": 0.3994068039424281,
+      "risk": 0.7285679620441927
+    },
+    {
+      "index": 34,
+      "province": "Banten",
+      "arrival_h": 62.16611688329833,
+      "prize": 0.09252064841437926,
+      "risk": 0.1722751683641382
+    },
+    {
+      "index": 10,
+      "province": "Lampung",
+      "arrival_h": 63.88385832028249,
+      "prize": 0.428720774444565,
+      "risk": 0.8121169970333616
+    },
+    {
+      "index": 23,
+      "province": "Kepulauan Riau",
+      "arrival_h": 68.97668187693831,
+      "prize": 0.3172245584648381,
+      "risk": 0.6323080701718611
+    }
+  ],
+  "fitness": 12.686994694469414,
+  "distance_km": 9582.495027643534,
+  "mission_time_h": 71.91247513821767,
+  "remaining_time_h": 0.08752486178232743,
+  "skipped": [
+    {
+      "index": 1,
+      "province": "Nusa Tenggara Timur",
+      "risk": 1.0
+    },
+    {
+      "index": 11,
+      "province": "Papua",
+      "risk": 0.7904808832860273
+    },
+    {
+      "index": 17,
+      "province": "Sumatera Utara",
+      "risk": 0.7235461582260095
+    },
+    {
+      "index": 19,
+      "province": "Kalimantan Utara",
+      "risk": 0.6882527255961839
+    },
+    {
+      "index": 22,
+      "province": "Aceh",
+      "risk": 0.640279426998573
+    },
+    {
+      "index": 25,
+      "province": "Papua Barat",
+      "risk": 0.5782162829815999
+    },
+    {
+      "index": 30,
+      "province": "Bengkulu",
+      "risk": 0.3763245791554923
+    },
+    {
+      "index": 31,
+      "province": "Papua Selatan",
+      "risk": 0.30152901428407436
+    },
+    {
+      "index": 32,
+      "province": "Yogyakarta",
+      "risk": 0.21451243497631384
+    },
+    {
+      "index": 33,
+      "province": "Papua Pegunungan",
+      "risk": 0.18926941813107703
+    },
+    {
+      "index": 35,
+      "province": "Papua Tengah",
+      "risk": 0.17150752137138564
+    },
+    {
+      "index": 36,
+      "province": "Papua Barat Daya",
+      "risk": 0.14302688585057471
+    },
+    {
+      "index": 37,
+      "province": "DKI Jakarta",
+      "risk": 0.0
+    }
+  ]
+}

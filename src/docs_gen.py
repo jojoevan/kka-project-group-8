@@ -141,6 +141,87 @@ def algorithm_diagnostics(results_dir):
                       "acceptance rate SA rata-rata", "generasi GA rata-rata"], rows)
 
 
+def firms_provenance_table(cfg, results_dir):
+    """Provenance rows of the Klaster hotspot instances: values from cfg (config.yaml) and constants in
+    the code; hotspot counts and the calibrated Batas waktu misi from the saved FIRMS tables."""
+    from src import calibration
+    f = cfg["firms"]; res = Path(results_dir) / "tables"; k_cal = int(f["calibration_k"])
+    snap = Path(f["snapshot"]); source = Path(results_dir).parent / snap.with_suffix(".source.txt")
+    downloaded = next((line.split(":", 1)[1].strip() for line in source.read_text(encoding="utf8").splitlines()
+                       if line.startswith("Diunduh")), None) if source.exists() else None
+    inst = pd.read_csv(res / "firms_instances.csv")
+    regions = pd.read_csv(res / f"firms_clusters_k{k_cal}.csv").groupby("region").hotspots.sum().sort_index()
+    cal = pd.read_csv(res / "firms_calibration.csv")
+    T = float(inst.time_limit_h.iloc[0]); lo, hi = calibration.TARGET_FRACTION
+    chosen = cal[cal.time_limit_h == T].iloc[0]; hit = lo <= chosen.visited_fraction <= hi
+    status = ("dalam target" if hit else
+              f"tidak ada kandidat dalam target, dipilih yang terdekat: {chosen.visited_fraction:.0%} klaster "
+              "terkunjungi")
+    candidates = ", ".join(f"{int(r.time_limit_h)} jam → {r.visited_fraction:.0%}" for r in cal.itertuples())
+    boxes = "; ".join(f"{name} {box}" for name, box in f["bboxes"].items())
+    rows = [
+        ("Snapshot hotspot VIIRS 7 hari", "NASA FIRMS VIIRS S-NPP 375 m, Asia Tenggara"
+         + (f", diunduh {downloaded}" if downloaded else ""), f"`{snap.as_posix()}` (+ `.source.txt`)", "REAL"),
+        ("Filter confidence", "/".join(f["confidence"]), "`config.yaml: firms.confidence`", "ASSUMED"),
+        ("Bounding box", f"{boxes} ([lat_min, lat_max, lon_min, lon_max], kotak kasar pulau)",
+         "`config.yaml: firms.bboxes`", "ASSUMED"),
+        ("Hotspot setelah filter", f"{int(inst.hotspots.iloc[0])} (" + ", ".join(
+            f"{r} {int(c)}" for r, c in regions.items()) + ")", "`results/tables/firms_instances.md`", "DERIVED"),
+        ("Jumlah Klaster hotspot k", ", ".join(map(str, f["sizes"])) + " (instance = k node + Depot)",
+         "`config.yaml: firms.sizes`", "ASSUMED"),
+        ("Klasterisasi", f"k-means (Lloyd, seeding k-means++), seed {f['kmeans_seed']}, atas (lat, lon·cos lat)",
+         "`src/firms.py`, `config.yaml: firms.kmeans_seed`", "ASSUMED"),
+        ("Lokasi node klaster", "pusat klaster; hotspot anggota terdekat bila pusatnya jatuh di luar kotak "
+         "(klaster lintas wilayah)", "`src/firms.py`", "DERIVED"),
+        ("Risiko klaster", "Σ FRP → log1p → min-max antar-klaster dalam satu instance", "`src/firms.py`",
+         "DERIVED"),
+        ("Laju decay klaster", f"konstan g0 = {cfg['decay_g0']} /jam (tanpa data operasional, κ tidak dipakai)",
+         "`docs/adr/0001-firms-clusters-instead-of-synthetic.md`", "ASSUMED"),
+        ("Depot FIRMS", f"{inst.depot.iloc[0]} (ibu kota provinsi {cfg['depot']})", "`config.yaml: depot`", "ASSUMED"),
+        ("Batas waktu misi FIRMS", f"{T:g} jam ({status})",
+         f"kalibrasi Greedy k={k_cal}, kandidat {candidates}, target {lo:.0%}–{hi:.0%} (`src/calibration.py`; "
+         "hasil: `results/tables/firms_calibration.md`)", "DERIVED"),
+        ("Budget evaluasi FIRMS", f"{f['budget']}", "`config.yaml: firms.budget`", "ASSUMED"),
+        ("Mode cepat FIRMS (`--quick`)", f"k {f['quick']['sizes']}, {f['quick']['seeds']} seed, budget "
+         f"{f['quick']['budget']}", "`config.yaml: firms.quick`", "ASSUMED"),
+    ]
+    return _md_table(["parameter", "nilai", "sumber", "status"], rows)
+
+
+def firms_summary(results_dir):
+    """Per k (Klaster hotspot instance), from tables/firms_summary.csv and tables/firms_instances.csv:
+    Batas waktu misi, Greedy visits, best-known, mean fitness per heuristic (highest bold) and the
+    tie-aware ranking of firms_phase.ranking."""
+    from src.experiments.firms_phase import format_ranking, ranking
+    res = Path(results_dir) / "tables"
+    s = pd.read_csv(res / "firms_summary.csv", dtype={"scenario": str})
+    inst = pd.read_csv(res / "firms_instances.csv").set_index("k")
+    order = ranking(s); rows = []
+    for (scen, n), g in s.groupby(["scenario", "n"], sort=True):
+        mean = g.set_index("algorithm")["mean"]; k = int(g.k.iloc[0]); top = max(mean[a] for a in HEURISTICS)
+        cells = [f"**{mean[a]:.3f}**" if mean[a] >= top - _TIE else f"{mean[a]:.3f}" for a in HEURISTICS]
+        i = inst.loc[k]
+        rows.append([k, f"{i.time_limit_h:g}", f"{int(i.greedy_visited)} ({i.greedy_visited_fraction:.0%})",
+                     f"{g.best_known.iloc[0]:.3f}", *cells, format_ranking(order[scen, n])])
+    return _md_table(["k", "Batas waktu misi (jam)", "klaster terkunjungi Greedy", "best-known",
+                      *(f"{a} rata-rata" for a in HEURISTICS), "peringkat (= berarti seri)"], rows)
+
+
+def firms_hc_cost(results_dir):
+    """Steepest-Ascent HC cost from tables/firms_hc_cost.csv: the largest province instance of scenario
+    2026 and every FIRMS instance — neighbourhood size (O(n^2)) against the budget, restarts and steps."""
+    t = pd.read_csv(Path(results_dir) / "tables" / "firms_hc_cost.csv", dtype={"scenario": str})
+    prov = t[(t.instance_family == "provinsi") & (t.scenario == "2026")]
+    rows = []
+    for _, r in pd.concat([prov[prov.n == prov.n.max()], t[t.instance_family == "FIRMS"]]).iterrows():
+        name = f"provinsi {r.scenario}, n={r.n}" if r.instance_family == "provinsi" else f"FIRMS k={r.n - 1}"
+        rows.append([name, r.candidates, r.neighbourhood_size, r.budget, f"{r.budget_per_neighbourhood:.1f}",
+                     f"{r.hc_restarts_mean:.2f}", f"{r.hc_steps_mean:.1f}"])
+    return _md_table(["instance", "node kandidat", "ukuran neighbourhood HC (evaluasi per langkah)",
+                      "budget evaluasi", "budget / neighbourhood (langkah penuh maks.)", "restart HC rata-rata",
+                      "langkah naik HC rata-rata"], rows)
+
+
 def _listed_files(results_dir):
     """Every figure (figures/*.png) and table (tables/*.md) under results_dir, relative to it."""
     natural = lambda s: [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", s)]  # n6 before n10
@@ -225,7 +306,11 @@ def _generators(root):
     return {"provenance": lambda: provenance_table(yaml.safe_load((root / "config.yaml").read_text("utf8"))),
             "figures": lambda: figure_list(res, CAPTIONS),
             "summary": lambda: results_summary(res),
-            "diagnostics": lambda: algorithm_diagnostics(res)}
+            "diagnostics": lambda: algorithm_diagnostics(res),
+            "provenance-firms": lambda: firms_provenance_table(
+                yaml.safe_load((root / "config.yaml").read_text("utf8")), res),
+            "firms-summary": lambda: firms_summary(res),
+            "firms-hc-cost": lambda: firms_hc_cost(res)}
 
 
 class _Lazy(dict):

@@ -89,7 +89,8 @@ def provenance_table(cfg):
         ("GA", f"populasi {ga.POPULATION}, tournament k={ga.TOURNAMENT}, OX, mutasi {ga.MUTATION}, "
          f"elitisme {ga.ELITES}, populasi awal acak (tanpa seeding greedy)",
          "`src/algorithms/genetic_algorithm.py`", "ASSUMED"),
-        ("Exact", f"enumerasi urutan dengan pemangkasan Batas waktu misi, maks. {exact.MAX_NODES} node",
+        ("Exact", f"enumerasi urutan dengan pemangkasan Batas waktu misi, maks. {exact.MAX_NODES} node termasuk Depot "
+         f"(n ≤ {exact.MAX_NODES}, n mencakup Depot; {exact.MAX_NODES - 1} node kandidat)",
          "`src/algorithms/exact.py`", "ASSUMED"),
         ("Sweep sensitivitas", f"n={sens['n']}, skenario {sens['scenario']}; T_max "
          f"{sens['time_limit_hours']} jam; g0 {sens['decay_g0']}", "`config.yaml: analysis.sensitivity`",
@@ -120,9 +121,11 @@ def results_summary(results_dir):
 
 
 def algorithm_diagnostics(results_dir):
-    """Per Skenario tahun and n, from raw/runs.csv: HC single-start vs final mean, mean HC restarts,
-    mean SA acceptance rate and mean GA generations. The HC neighbourhood size (evaluations per
-    steepest-ascent step, n−1 candidate nodes) comes from the shared move set."""
+    """Per Skenario tahun and n, from raw/runs.csv: HC single-start vs final mean, mean HC restarts, seeds
+    whose HC never restarted (hc_restarts counts climbs started, so 1 means the first climb was still
+    running when the budget ran out, or ended on its very last evaluation), mean SA acceptance rate and
+    mean GA generations. The HC neighbourhood size (evaluations per steepest-ascent step, n−1 candidate
+    nodes) comes from the shared move set."""
     from src.algorithms.common import all_moves
     r = pd.read_csv(Path(results_dir) / "raw" / "runs.csv", dtype={"scenario": str})
     rows = []
@@ -130,10 +133,12 @@ def algorithm_diagnostics(results_dir):
         hc, sa, ga = (g[g.algorithm == a] for a in ("HC", "SA", "GA"))
         rows.append([scen, n, len(all_moves(int(n) - 1)), f"{hc.hc_single_start_fitness.mean():.3f}",
                      f"{hc.fitness.mean():.3f}", f"{hc.hc_restarts.mean():.1f}",
+                     f"{int((hc.hc_restarts == 1).sum())}/{len(hc)}",
                      f"{sa.sa_acceptance_rate.mean():.3f}", f"{ga.ga_generations.mean():.0f}"])
     return _md_table(["skenario", "n", "evaluasi per langkah HC (neighbourhood)", "HC single-start rata-rata",
-                      "HC akhir rata-rata",
-                      "restart HC rata-rata", "acceptance rate SA rata-rata", "generasi GA rata-rata"], rows)
+                      "HC akhir rata-rata", "restart HC rata-rata",
+                      "seed dengan 1 pendakian HC (pendakian pertama belum selesai saat budget habis)",
+                      "acceptance rate SA rata-rata", "generasi GA rata-rata"], rows)
 
 
 def _listed_files(results_dir):

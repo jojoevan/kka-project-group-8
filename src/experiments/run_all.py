@@ -34,11 +34,11 @@ from src.algorithms import SOLVERS
 from src.algorithms.exact import MAX_NODES as EXACT_MAX_NODES
 from src.data_prep import SCENARIOS, prepare
 from src.experiments import analysis, firms_phase, plots
+from src.experiments.records import HEURISTICS, run_record
 from src.experiments.stats import (convergence_table, evals_to_fraction, optimality_gap_table,
                                    scalability_table, sensitivity_table, summary_table, wilcoxon_holm_table)
 from src.instance import INSTANCE_SIZES, build_instance
 
-HEURISTICS = ("Greedy", "HC", "SA", "GA")
 EXACT_BUDGET = 10**7
 log = logging.getLogger("run_all")
 
@@ -72,20 +72,7 @@ def run_one(task):
     scenario, n, algorithm, seed, budget, *rest = task
     overrides = rest[0] if rest else ()
     res = SOLVERS[algorithm](_instance(n, scenario, overrides), budget=budget, seed=seed)
-    extra = res.get("extra", {})
-    route = res["best_route"]
-    row = {"algorithm": algorithm, "n": n, "scenario": scenario, "seed": seed, "fitness": res["best_fitness"],
-           "runtime_s": res["runtime"], "evals": res["evals"], "budget": budget,
-           "evals_to_95": evals_to_fraction(res["history"], .95),
-           "hc_single_start_fitness": extra.get("single_start_fitness") if algorithm == "HC" else None,
-           "hc_restarts": extra.get("restarts") if algorithm == "HC" else None,
-           "sa_acceptance_rate": extra.get("acceptance_rate") if algorithm == "SA" else None,
-           "ga_generations": extra.get("generations") if algorithm == "GA" else None,
-           "exact_optimal": extra.get("optimal") if algorithm == "Exact" else None,
-           "visited": len(route["route"]), "mission_time_h": route["mission_time_h"]}
-    hist = {"algorithm": algorithm, "n": n, "scenario": scenario, "seed": seed,
-            "history": [[int(e), float(v)] for e, v in res["history"]]}
-    return row, hist, route, [int(x) for x in res["best_perm"]]
+    return run_record(res, algorithm, seed, budget, {"n": n, "scenario": scenario})
 
 
 def budget_for(n, cfg, quick):

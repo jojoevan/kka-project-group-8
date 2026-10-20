@@ -17,6 +17,7 @@ from src.algorithms import SOLVERS
 from src.algorithms.common import all_moves
 from src.calibration import calibrate_time_limit
 from src.experiments import plots
+from src.experiments.records import run_record
 from src.experiments.stats import evals_to_fraction, scalability_table, summary_table, wilcoxon_holm_table
 from src.firms import build_firms_instance, load_hotspots
 
@@ -31,20 +32,10 @@ def _init(instances):
 def run_one(task):
     k, algorithm, seed, budget = task
     inst = _instances[k]
-    res = SOLVERS[algorithm](inst, budget=budget, seed=seed); extra = res.get("extra", {})
-    route = res["best_route"]
-    row = {"algorithm": algorithm, "k": k, "n": k + 1, "scenario": FAMILY, "seed": seed,
-           "fitness": res["best_fitness"], "runtime_s": res["runtime"], "evals": res["evals"], "budget": budget,
-           "evals_to_95": evals_to_fraction(res["history"], .95),
-           "hc_single_start_fitness": extra.get("single_start_fitness") if algorithm == "HC" else None,
-           "hc_restarts": extra.get("restarts") if algorithm == "HC" else None,
-           "hc_steps": extra.get("steps") if algorithm == "HC" else None,
-           "sa_acceptance_rate": extra.get("acceptance_rate") if algorithm == "SA" else None,
-           "ga_generations": extra.get("generations") if algorithm == "GA" else None,
-           "visited": len(route["route"]), "mission_time_h": route["mission_time_h"],
-           "time_limit_h": inst.time_limit}
-    hist = {"algorithm": algorithm, "k": k, "seed": seed, "history": [[int(e), float(v)] for e, v in res["history"]]}
-    return row, hist, route, [int(x) for x in res["best_perm"]]
+    res = SOLVERS[algorithm](inst, budget=budget, seed=seed)
+    row, hist, route, perm = run_record(res, algorithm, seed, budget, {"k": k, "n": k + 1, "scenario": FAMILY})
+    row["time_limit_h"] = inst.time_limit
+    return row, hist, route, perm
 
 
 def snapshot_path(cfg, root):
@@ -98,55 +89,85 @@ def hc_cost_table(firms_runs, province_runs):
     return pd.DataFrame(rows)
 
 
+TIE_RTOL = 1e-9  # mean fitness within this relative tolerance counts as a tie
+
+
 def ranking(summary):
-    """Algorithm order by mean fitness per instance (best first)."""
-    return {key: g.sort_values("mean", ascending=False, kind="stable").algorithm.tolist()
-            for key, g in summary.groupby(["scenario", "n"])}
+    """Per instance: tie groups of algorithms by mean fitness, best group first; names sorted in a group.
+
+    A group holds every algorithm within TIE_RTOL (relative) of the group's best mean."""
+    out = {}
+    for key, g in summary.groupby(["scenario", "n"]):
+        groups = []; top = None
+        for a, m in g.sort_values("mean", ascending=False, kind="stable")[["algorithm", "mean"]].itertuples(index=False):
+            if groups and top - m <= TIE_RTOL * max(abs(top), abs(m)): groups[-1].append(a)
+            else: groups.append([a]); top = m
+        out[key] = [sorted(grp) for grp in groups]
+    return out
 
 
-def _pairs(order):
-    return {(a, b) for i, a in enumerate(order) for b in order[i + 1:]}
+def format_ranking(groups):
+    """Tie groups as text, e.g. 'SA > Greedy = HC > GA'."""
+    return " > ".join(" = ".join(grp) for grp in groups)
+
+
+def _strict_pairs(groups):
+    """(a, b) for every a ranked strictly above b."""
+    return {(a, b) for i, grp in enumerate(groups) for a in grp for later in groups[i + 1:] for b in later}
 
 
 def ranking_report(province_summary, province_wilcoxon, firms_summary, firms_wilcoxon, sizes):
     """Markdown statement (generated from the data) of whether the province ranking holds on FIRMS,
-    and the per-instance ranking table."""
+    and the per-instance ranking table.
+
+    The reference is the largest province instance (scenario 2026 if present). On a FIRMS instance the
+    ranking holds if every pair strictly ordered on the reference keeps that order; a reversed pair
+    breaks it, and a pair that ties on FIRMS is reported as a tie (neither kept nor reversed)."""
     def sig(w, sc, n, a, b):
         r = w[(w.scenario.astype(str) == str(sc)) & (w.n == n) & (((w.algorithm_a == a) & (w.algorithm_b == b)) |
                                                                 ((w.algorithm_a == b) & (w.algorithm_b == a)))]
         return bool(r["significant_0.05"].iloc[0]) if len(r) else False
+    col = "peringkat (rata-rata fitness, terbaik dulu; = berarti seri)"
     rows = []; lines = ["# Apakah peringkat algoritma instance provinsi tetap berlaku pada instance FIRMS?", ""]
     pr = ranking(province_summary) if province_summary is not None else {}
     fr = ranking(firms_summary)
     for (sc, n), order in sorted(pr.items(), key=lambda x: (str(x[0][0]), x[0][1])):
-        rows.append({"instance": f"provinsi {sc}, n={n}", "peringkat (rata-rata fitness, terbaik dulu)": " > ".join(order)})
+        rows.append({"instance": f"provinsi {sc}, n={n}", col: format_ranking(order)})
     for (sc, n), order in sorted(fr.items(), key=lambda x: x[0][1]):
-        rows.append({"instance": f"FIRMS k={n - 1} (n={n})", "peringkat (rata-rata fitness, terbaik dulu)": " > ".join(order)})
+        rows.append({"instance": f"FIRMS k={n - 1} (n={n})", col: format_ranking(order)})
     if not pr:
         lines += ["Hasil provinsi tidak tersedia, sehingga peringkat tidak dapat dibandingkan.", ""]
     else:
         ref_key = max((k for k in pr if str(k[0]) == "2026"), key=lambda k: k[1], default=max(pr, key=lambda k: k[1]))
-        ref = pr[ref_key]
-        lines += [f"Acuan: instance provinsi terbesar, skenario {ref_key[0]} n={ref_key[1]}: **{' > '.join(ref)}** "
-                  "(urut rata-rata fitness 30 seed).", ""]
-        holds_all = True
+        ref = sorted(_strict_pairs(pr[ref_key]))
+        lines += [f"Acuan: instance provinsi terbesar, skenario {ref_key[0]} n={ref_key[1]}: "
+                  f"**{format_ranking(pr[ref_key])}** (urut rata-rata fitness 30 seed; `=` berarti seri dalam "
+                  f"toleransi relatif {TIE_RTOL:g}).", ""]
+        any_flip = any_tie = False
         for (sc, n), order in sorted(fr.items(), key=lambda x: x[0][1]):
-            flipped = sorted(_pairs(ref) - _pairs(order))
-            if not flipped:
-                lines.append(f"- FIRMS k={n - 1}: {' > '.join(order)}. Peringkat provinsi **tetap berlaku**.")
-                continue
-            holds_all = False
-            desc = []
-            for a, b in flipped:  # a above b on provinces, b above a on FIRMS
-                s_f = "signifikan" if sig(firms_wilcoxon, sc, n, a, b) else "tidak signifikan"
-                s_p = "signifikan" if sig(province_wilcoxon, ref_key[0], ref_key[1], a, b) else "tidak signifikan"
-                desc.append(f"{b} di atas {a} (FIRMS: {s_f}; provinsi: {s_p}, Wilcoxon-Holm 0,05)")
-            lines.append(f"- FIRMS k={n - 1}: {' > '.join(order)}. Peringkat provinsi **tidak tetap berlaku**: "
-                         + "; ".join(desc) + ".")
-        lines += ["", "Kesimpulan: peringkat provinsi " + ("**tetap berlaku** pada semua instance FIRMS."
-                                                          if holds_all else
-                                                          "**tidak tetap berlaku** sepenuhnya pada instance FIRMS "
-                                                          "(lihat pasangan yang bertukar di atas).")]
+            here = _strict_pairs(order)
+            flipped = [(a, b) for a, b in ref if (b, a) in here]  # a above b on provinces, b above a here
+            tied = [(a, b) for a, b in ref if (a, b) not in here and (b, a) not in here]
+            any_flip |= bool(flipped); any_tie |= bool(tied)
+            head = f"- FIRMS k={n - 1}: {format_ranking(order)}. "
+            ties = "; ".join(f"{' = '.join(sorted((a, b)))} seri (provinsi: {a} di atas {b})" for a, b in tied)
+            if flipped:
+                desc = []
+                for a, b in flipped:
+                    s_f = "signifikan" if sig(firms_wilcoxon, sc, n, a, b) else "tidak signifikan"
+                    s_p = "signifikan" if sig(province_wilcoxon, ref_key[0], ref_key[1], a, b) else "tidak signifikan"
+                    desc.append(f"{b} di atas {a} (FIRMS: {s_f}; provinsi: {s_p}, Wilcoxon-Holm 0,05)")
+                lines.append(head + "Peringkat provinsi **tidak tetap berlaku**: " + "; ".join(desc)
+                             + (f"; selain itu {ties}" if tied else "") + ".")
+            elif tied:
+                lines.append(head + f"Tidak ada pasangan yang bertukar, tetapi ada yang seri: {ties}.")
+            else:
+                lines.append(head + "Peringkat provinsi **tetap berlaku**.")
+        verdict = ("**tidak tetap berlaku** sepenuhnya pada instance FIRMS (lihat pasangan yang bertukar di atas)."
+                   if any_flip else
+                   "tidak dibantah pada instance FIRMS, tetapi sebagian pasangan seri (lihat di atas)."
+                   if any_tie else "**tetap berlaku** pada semua instance FIRMS.")
+        lines += ["", "Kesimpulan: peringkat provinsi " + verdict]
     table = pd.DataFrame(rows)
     return "\n".join(lines) + "\n\n" + table.to_markdown(index=False) + "\n", table
 

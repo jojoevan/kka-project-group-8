@@ -119,18 +119,18 @@ Ringkasan temuan:
 Dihitung dari `results/raw/runs.csv`. Kolom "evaluasi per langkah HC" adalah ukuran neighbourhood penuh dari move set bersama.
 
 <!-- AUTO:diagnostics -->
-| skenario | n | evaluasi per langkah HC (neighbourhood) | HC single-start rata-rata | HC akhir rata-rata | restart HC rata-rata | acceptance rate SA rata-rata | generasi GA rata-rata |
-|:--|:--|:--|:--|:--|:--|:--|:--|
-| 2019 | 6 | 28 | 4.101 | 4.101 | 235.5 | 0.069 | 203 |
-| 2019 | 10 | 120 | 6.767 | 6.767 | 29.7 | 0.118 | 203 |
-| 2019 | 15 | 325 | 9.080 | 9.157 | 6.5 | 0.114 | 203 |
-| 2019 | 25 | 1035 | 11.889 | 12.121 | 3.1 | 0.119 | 509 |
-| 2019 | 38 | 2556 | 11.989 | 12.050 | 1.3 | 0.238 | 509 |
-| 2026 | 6 | 28 | 3.244 | 3.244 | 234.4 | 0.083 | 203 |
-| 2026 | 10 | 120 | 5.225 | 5.225 | 28.5 | 0.107 | 203 |
-| 2026 | 15 | 325 | 6.933 | 6.933 | 6.4 | 0.072 | 203 |
-| 2026 | 25 | 1035 | 8.324 | 8.543 | 3.3 | 0.140 | 509 |
-| 2026 | 38 | 2556 | 8.688 | 8.708 | 1.3 | 0.232 | 509 |
+| skenario | n | evaluasi per langkah HC (neighbourhood) | HC single-start rata-rata | HC akhir rata-rata | restart HC rata-rata | seed dengan 1 pendakian HC (pendakian pertama belum selesai saat budget habis) | acceptance rate SA rata-rata | generasi GA rata-rata |
+|:--|:--|:--|:--|:--|:--|:--|:--|:--|
+| 2019 | 6 | 28 | 4.101 | 4.101 | 235.5 | 0/30 | 0.069 | 203 |
+| 2019 | 10 | 120 | 6.767 | 6.767 | 29.7 | 0/30 | 0.118 | 203 |
+| 2019 | 15 | 325 | 9.080 | 9.157 | 6.5 | 0/30 | 0.114 | 203 |
+| 2019 | 25 | 1035 | 11.889 | 12.121 | 3.1 | 0/30 | 0.119 | 509 |
+| 2019 | 38 | 2556 | 11.989 | 12.050 | 1.3 | 21/30 | 0.238 | 509 |
+| 2026 | 6 | 28 | 3.244 | 3.244 | 234.4 | 0/30 | 0.083 | 203 |
+| 2026 | 10 | 120 | 5.225 | 5.225 | 28.5 | 0/30 | 0.107 | 203 |
+| 2026 | 15 | 325 | 6.933 | 6.933 | 6.4 | 0/30 | 0.072 | 203 |
+| 2026 | 25 | 1035 | 8.324 | 8.543 | 3.3 | 0/30 | 0.140 | 509 |
+| 2026 | 38 | 2556 | 8.688 | 8.708 | 1.3 | 20/30 | 0.232 | 509 |
 <!-- /AUTO:diagnostics -->
 
 ## Observasi
@@ -138,7 +138,8 @@ Dihitung dari `results/raw/runs.csv`. Kolom "evaluasi per langkah HC" adalah uku
 Label **[Hipotesis]** menandai penjelasan yang belum diuji dengan eksperimen tersendiri. Label **[Data]** menandai pernyataan yang langsung terbaca dari hasil tersimpan.
 
 1. **[Data]** Pada n=38, satu langkah HC mengevaluasi 2.556 tetangga, sehingga dengan budget 50.000 HC hanya sempat melakukan rata-rata 1.3 restart (tabel diagnostik di atas). Kurva konvergensi HC n=38 masih naik saat budget habis (`results/figures/convergence_n38.png`). Rata-rata HC pada 2026 n=38 (8.708) tidak berbeda signifikan dari Greedy (8.699, p Holm 0.6408).
-   **[Hipotesis]** Kekalahan HC di n=38 lebih disebabkan biaya per langkah yang O(n²) daripada local optimum. Pendakian pertama belum selesai saat budget habis. Hipotesis ini bisa diuji dengan menaikkan budget HC atau memakai first-improvement.
+   **[Data]** Rata-rata 1.3 restart berarti tidak semua seed sama: pada sebagian besar seed HC hanya sempat satu pendakian (pendakian pertama belum selesai saat budget habis), sedangkan pada seed lainnya pendakian pertama mencapai local optimum dan satu restart sempat dimulai. Jumlah seed per instance ada di kolom "seed dengan 1 pendakian HC" pada tabel diagnostik di atas (kolom `hc_restarts` = 1 di `results/raw/runs.csv`).
+   **[Hipotesis]** Kekalahan HC di n=38 lebih disebabkan biaya per langkah yang O(n²) daripada local optimum, karena pada sebagian besar seed pendakian pertama pun belum selesai. Hipotesis ini bisa diuji dengan menaikkan budget HC atau memakai first-improvement.
 2. **[Data]** GA adalah algoritma terlemah di n ≥ 25. Kualitas rata-ratanya 78% dari best-known pada 2026 n=38 dan 76.2% pada 2019 n=38 (`results/tables/scalability.md`), dengan hanya sekitar 509 generasi dalam budget 50.000 (tabel diagnostik).
    **[Hipotesis]** Fitness ditentukan oleh *prefix* permutasi yang muat dalam Batas waktu misi. Order Crossover mempertahankan urutan relatif tetapi menggeser posisi absolut, sehingga prefix yang baik sering rusak. Populasi acak tanpa local search juga membutuhkan lebih banyak generasi daripada yang tersedia.
 3. **[Data]** SA paling stabil di n=38: simpangan baku 0.143 (2026) dan 0.1427 (2019), terkecil di antara HC, SA, dan GA (`results/tables/summary.md`). Acceptance rate rata-ratanya pada n=38 sekitar 0.23 (tabel diagnostik).

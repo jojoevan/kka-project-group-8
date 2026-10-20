@@ -52,7 +52,7 @@ Pembahasan:
 
 ## 3.3 Optimality gap
 
-Sumber: `results/tables/optimality_gap.md`. Exact hanya praktis sampai 9 node, sehingga gap hanya tersedia untuk n=6.
+Sumber: `results/tables/optimality_gap.md`. Exact hanya praktis sampai 9 node termasuk Depot (n ≤ 9), sehingga gap hanya tersedia untuk n=6.
 
 - HC, SA, dan GA mencapai optimum Exact di **semua** 30 seed untuk kedua Skenario tahun: gap 0%, proporsi optimal 1. Optimumnya 4.101 (2019) dan 3.244 (2026).
 - Greedy optimal pada 2019. Pada 2026, Greedy meleset 1.704%.

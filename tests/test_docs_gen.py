@@ -42,6 +42,12 @@ def test_provenance_values_come_from_the_config():
     assert rows["Depot"][1] == "Jambi"
 
 
+def test_provenance_exact_limit_counts_the_depot():
+    from src.docs_gen import provenance_table
+    rows = {r[0]: r for r in _md_rows(provenance_table(_cfg()))}
+    assert "maks. 9 node termasuk Depot" in rows["Exact"][1]
+
+
 def test_every_provenance_row_has_a_known_status():
     from src.docs_gen import provenance_table
     rows = _md_rows(provenance_table(_cfg()))
@@ -81,7 +87,7 @@ def test_algorithm_diagnostics_come_from_the_runs(tmp_path):
     runs.to_csv(tmp_path / "raw" / "runs.csv", index=False)
     assert _md_rows(algorithm_diagnostics(tmp_path)) == [
         # 37 kandidat: 666 swap + 3 × 630 (relocate dua arah dan 2-opt dengan jarak ≥ 2) = 2556 tetangga
-        ["2026", "38", "2556", "8.000", "8.500", "1.5", "0.250", "509"]]
+        ["2026", "38", "2556", "8.000", "8.500", "1.5", "1/2", "0.250", "509"]]
 
 
 def test_check_reports_stale_docs_and_a_rewrite_fixes_them(tmp_path):

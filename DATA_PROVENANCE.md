@@ -45,7 +45,7 @@ Tabel di bawah dibuat otomatis oleh `python -m src.docs_gen` dari `config.yaml` 
 | HC | steepest-ascent atas seluruh neighbourhood swap/relocate/2-opt; restart acak sampai budget habis | `src/algorithms/hill_climbing.py` | ASSUMED |
 | SA: T0 dan pendinginan | T0 = rata-rata \|Δ\| positif dari 100 move acak; geometris c = 0.001^(1/sisa budget); tanpa reheating | `src/algorithms/simulated_annealing.py` | ASSUMED |
 | GA | populasi 100, tournament k=3, OX, mutasi 0.2, elitisme 2, populasi awal acak (tanpa seeding greedy) | `src/algorithms/genetic_algorithm.py` | ASSUMED |
-| Exact | enumerasi urutan dengan pemangkasan Batas waktu misi, maks. 9 node | `src/algorithms/exact.py` | ASSUMED |
+| Exact | enumerasi urutan dengan pemangkasan Batas waktu misi, maks. 9 node termasuk Depot (n ≤ 9, n mencakup Depot; 8 node kandidat) | `src/algorithms/exact.py` | ASSUMED |
 | Sweep sensitivitas | n=38, skenario 2026; T_max [24, 48, 72, 120] jam; g0 [0, 0.005, 0.01, 0.02] | `config.yaml: analysis.sensitivity` | ASSUMED |
 | Mode cepat (`--quick`) | n [6, 10], 3 seed, budget 300 | `config.yaml: quick` | ASSUMED |
 <!-- /AUTO:provenance -->

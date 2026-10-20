@@ -4,6 +4,8 @@ Proyek UTS mata kuliah KKA, Kelompok 8. Proyek ini membandingkan **Steepest-Asce
 
 Istilah di semua dokumen mengikuti [`GLOSSARY.md`](GLOSSARY.md).
 
+**Tampilan interaktif:** <https://kka-kelompok8-karhutla.streamlit.app/> (tanpa login dan tanpa instalasi).
+
 ## Deskripsi masalah
 
 Satu armada udara pemadam kebakaran hutan dan lahan (karhutla), misalnya helikopter *water-bombing* atau pesawat OMC, berangkat dari **Depot** di Pekanbaru (Riau). Armada harus kembali ke Depot sebelum **Batas waktu misi** habis. Setiap provinsi adalah satu **Node** dengan **Risiko** dalam [0,1]. Risiko dihitung dari luas terbakar historis 2018–2025, luas terbakar tahun berjalan, dan keparahan operasional dari snapshot 2026-10-19.
@@ -86,6 +88,10 @@ python -m pytest
 ```
 
 ### Menjalankan tampilan interaktif
+
+Versi daring ada di <https://kka-kelompok8-karhutla.streamlit.app/>, di-deploy dengan Streamlit Community Cloud dari branch `main` (file utama `app/main.py`, dependensi `app/requirements.txt`). Setiap merge ke `main` otomatis memperbarui aplikasi. Jika lama tidak dibuka, aplikasi tertidur; klik tombol untuk membangunkannya dan tunggu ±1 menit.
+
+Untuk menjalankannya secara lokal:
 
 ```bash
 pip install -r requirements-app.txt

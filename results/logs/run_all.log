@@ -1,7 +1,8 @@
-2026-10-20 05:59:29,718 INFO: Mode: penuh; 1202 run; 12 worker; Batas waktu misi 72 jam untuk semua instance
-2026-10-20 05:59:29,733 INFO: Catatan: skenario 2019 n=6 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 5 node dalam 24.4 jam); diterima sesuai keputusan owner.
-2026-10-20 05:59:29,744 INFO: Catatan: skenario 2019 n=10 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 9 node dalam 59.0 jam); diterima sesuai keputusan owner.
-2026-10-20 05:59:29,784 INFO: Catatan: skenario 2026 n=6 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 5 node dalam 25.8 jam); diterima sesuai keputusan owner.
-2026-10-20 05:59:29,793 INFO: Catatan: skenario 2026 n=10 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 9 node dalam 54.3 jam); diterima sesuai keputusan owner.
-2026-10-20 06:03:59,565 INFO: Semua run selesai dalam 269.7 s
-2026-10-20 06:04:01,865 INFO: Total runtime eksperimen: 272.4 s (4.5 menit)
+2026-10-20 06:16:34,031 INFO: Mode: penuh; 1202 run; 12 worker; Batas waktu misi 72 jam untuk semua instance
+2026-10-20 06:16:34,043 INFO: Catatan: skenario 2019 n=6 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 5 node dalam 24.4 jam); diterima sesuai keputusan owner.
+2026-10-20 06:16:34,053 INFO: Catatan: skenario 2019 n=10 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 9 node dalam 59.0 jam); diterima sesuai keputusan owner.
+2026-10-20 06:16:34,097 INFO: Catatan: skenario 2026 n=6 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 5 node dalam 25.8 jam); diterima sesuai keputusan owner.
+2026-10-20 06:16:34,106 INFO: Catatan: skenario 2026 n=10 — Batas waktu misi 72 jam tidak mengikat (Greedy mengunjungi semua 9 node dalam 54.3 jam); diterima sesuai keputusan owner.
+2026-10-20 06:16:34,138 INFO: Sweep sensitivitas: 960 run tambahan
+2026-10-20 06:27:55,986 INFO: Semua run selesai dalam 681.8 s
+2026-10-20 06:28:01,182 INFO: Total runtime eksperimen: 687.4 s (11.5 menit)

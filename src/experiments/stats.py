@@ -77,3 +77,63 @@ def wilcoxon_holm_table(runs, algorithms):
             row["p_holm"] = ph; row["significant_0.05"] = ph < .05
         rows += block
     return pd.DataFrame(rows)
+
+
+def convergence_curve(histories, grid):
+    """Mean and population std across seeds of the best-so-far step function at each grid point.
+
+    Each history is [(evals, best_so_far)] with increasing evals; before its first point a run counts
+    as its first value, after its last point it stays at its final best.
+    """
+    grid = np.asarray(grid)
+    values = []
+    for h in histories:
+        ev = np.array([e for e, _ in h]); best = np.array([v for _, v in h], float)
+        idx = np.searchsorted(ev, grid, side="right") - 1
+        values.append(best[np.clip(idx, 0, None)])
+    values = np.vstack(values)
+    return {"mean": values.mean(axis=0).tolist(), "std": values.std(axis=0).tolist()}
+
+
+def scalability_table(runs, algorithms):
+    """Per algorithm x n x scenario: mean/std runtime and solution quality as % of the best-known fitness
+    of the instance (Exact included), so different n are comparable."""
+    r = runs.join(best_known(runs), on=KEYS)
+    r = r[r.algorithm.isin(algorithms)].assign(quality_pct=lambda d: 100 * d.fitness / d.best_known)
+    return r.groupby(KEYS + ["algorithm"]).agg(
+        runtime_mean_s=("runtime_s", "mean"), runtime_std_s=("runtime_s", "std"),
+        quality_mean_pct=("quality_pct", "mean"), quality_std_pct=("quality_pct", "std"),
+        visited_mean=("visited", "mean")).reset_index().fillna({"runtime_std_s": 0., "quality_std_pct": 0.})
+
+
+def sensitivity_table(sens_runs):
+    """Per swept parameter x value x algorithm: fitness statistics, visited nodes, mission time, runtime,
+    and quality as % of the best run of that setting (fitness is only comparable within one setting)."""
+    keys = ["parameter", "value"]
+    r = sens_runs.join(sens_runs.groupby(keys).fitness.max().rename("setting_best"), on=keys)
+    r["quality_pct"] = 100 * r.fitness / r.setting_best
+    s = r.groupby(keys + ["n", "scenario", "algorithm"], sort=False).agg(
+        runs=("fitness", "size"), best=("fitness", "max"), mean=("fitness", "mean"), std=("fitness", "std"),
+        median=("fitness", "median"), visited_mean=("visited", "mean"),
+        mission_time_mean_h=("mission_time_h", "mean"), runtime_mean_s=("runtime_s", "mean"),
+        quality_mean_pct=("quality_pct", "mean")).reset_index()
+    s["std"] = s["std"].fillna(0.)
+    return s
+
+
+CONVERGENCE_POINTS = 200
+
+
+def convergence_table(histories, runs, sizes, algorithms):
+    """Long table (algorithm, n, scenario, evals, mean, std, seeds) of convergence curves for the given
+    sizes; the grid runs linearly from 1 to the evaluation budget of the instance."""
+    rows = []
+    hist = pd.DataFrame(histories)
+    for (alg, n, sc), g in hist[hist.n.isin(sizes) & hist.algorithm.isin(algorithms)].groupby(
+            ["algorithm", "n", "scenario"]):
+        budget = int(runs[(runs.n == n) & (runs.scenario == sc)].budget.max())
+        grid = np.unique(np.linspace(1, budget, CONVERGENCE_POINTS).astype(int))
+        c = convergence_curve(g.history.tolist(), grid)
+        rows += [{"algorithm": alg, "n": n, "scenario": sc, "evals": int(e), "mean": m, "std": s,
+                  "seeds": len(g)} for e, m, s in zip(grid, c["mean"], c["std"])]
+    return pd.DataFrame(rows)

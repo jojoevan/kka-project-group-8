@@ -24,29 +24,29 @@ Tabel di bawah dibuat otomatis oleh `python -m src.docs_gen` dari `config.yaml` 
 | Visibilitas bandara | angka minimum di dalam teks (km) | `src/data_prep.py` → `data/processed/province_features.csv` | DERIVED |
 | Komponen operasional `ops` | rata-rata luas indikatif, fire spot, PM2.5/4, 1/visibilitas (masing-masing ternormalisasi), min-max antar-6 provinsi; 0 untuk 32 provinsi lain (`has_ops=False`, tanpa imputasi); hanya Skenario tahun 2026 | `src/data_prep.py` → `data/processed/province_features.csv` | DERIVED |
 | Risiko | α·hist + β·cur + δ·ops, lalu min-max **sekali** atas 38 provinsi per Skenario tahun | `src/data_prep.py` → `data/processed/province_features.csv` | DERIVED |
-| Jarak antar-node | Haversine antar-ibu kota × faktor detour 1.15 | `src/instance.py` | DERIVED |
+| Jarak antar-node | Haversine antar-ibu kota × faktor detour 1,15 | `src/instance.py` | DERIVED |
 | Laju decay node `g_i` | g0·(1 + κ·ops_i); ops_i = 0 di luar Skenario tahun 2026 | `src/instance.py` | DERIVED |
 | Pemilihan node instance | n=6: Depot + provinsi ber-data operasional; n lain: Depot + top-(n−1) Risiko; n=38: semua provinsi | `src/instance.py` | DERIVED |
 | Batas waktu misi `T_max` | 72 jam | kalibrasi Greedy n=38 skenario 2026, kandidat [24, 48, 72, 120] jam, target 40%–60% node terkunjungi (`src/calibration.py`; hasil: `results/tables/instances.md`) | DERIVED |
-| Bobot Risiko α, β, δ | 0.4, 0.3, 0.3 | `config.yaml: weights` | ASSUMED |
-| Faktor keterkinian γ | 0.8 | `config.yaml: gamma` | ASSUMED |
+| Bobot Risiko α, β, δ | 0,4; 0,3; 0,3 | `config.yaml: weights` | ASSUMED |
+| Faktor keterkinian γ | 0,8 | `config.yaml: gamma` | ASSUMED |
 | Koordinat node provinsi | koordinat ibu kota provinsi (geografi publik, perlu diverifikasi) | `data/external/province_coords.csv` | ASSUMED |
 | Depot | Riau | `config.yaml: depot` | ASSUMED |
 | Kecepatan armada `v` | 200 km/jam | `config.yaml: speed_kmh` | ASSUMED |
-| Faktor detour | 1.15 | `config.yaml: detour_factor` | ASSUMED |
-| Waktu tinggal per Kunjungan | 1.0 jam | `config.yaml: dwell_hours` | ASSUMED |
-| Laju decay dasar `g0` | 0.01 /jam | `config.yaml: decay_g0` | ASSUMED |
-| Pengali keparahan decay κ | 1.0 | `config.yaml: decay_kappa` | ASSUMED |
+| Faktor detour | 1,15 | `config.yaml: detour_factor` | ASSUMED |
+| Waktu tinggal per Kunjungan | 1,0 jam | `config.yaml: dwell_hours` | ASSUMED |
+| Laju decay dasar `g0` | 0,01 /jam | `config.yaml: decay_g0` | ASSUMED |
+| Pengali keparahan decay κ | 1,0 | `config.yaml: decay_kappa` | ASSUMED |
 | Bentuk Prize | Risiko·exp(−g_i·waktu tiba); proksi kerusakan yang dicegah, bukan ukuran resmi | `src/instance.py` | ASSUMED |
 | Skenario tahun | 2019, 2026 | `src/data_prep.py: SCENARIOS` | ASSUMED |
 | Ukuran instance n (termasuk Depot) | 6, 10, 15, 25, 38 | `src/instance.py: INSTANCE_SIZES` | ASSUMED |
 | Budget evaluasi per run | 20000 (n ≤ 15), 50000 (n > 15) | `config.yaml: evaluation_budget` | ASSUMED |
 | Jumlah seed per konfigurasi | 30 | `config.yaml: seeds` | ASSUMED |
 | HC | steepest-ascent atas seluruh neighbourhood swap/relocate/2-opt; restart acak sampai budget habis | `src/algorithms/hill_climbing.py` | ASSUMED |
-| SA: T0 dan pendinginan | T0 = rata-rata \|Δ\| positif dari 100 move acak; geometris c = 0.001^(1/sisa budget); tanpa reheating | `src/algorithms/simulated_annealing.py` | ASSUMED |
-| GA | populasi 100, tournament k=3, OX, mutasi 0.2, elitisme 2, populasi awal acak (tanpa seeding greedy) | `src/algorithms/genetic_algorithm.py` | ASSUMED |
+| SA: T0 dan pendinginan | T0 = rata-rata \|Δ\| positif dari 100 move acak; geometris c = 0,001^(1/sisa budget); tanpa reheating | `src/algorithms/simulated_annealing.py` | ASSUMED |
+| GA | populasi 100, tournament k=3, OX, mutasi 0,2, elitisme 2, populasi awal acak (tanpa seeding greedy) | `src/algorithms/genetic_algorithm.py` | ASSUMED |
 | Exact | enumerasi urutan dengan pemangkasan Batas waktu misi, maks. 9 node termasuk Depot (n ≤ 9, n mencakup Depot; 8 node kandidat) | `src/algorithms/exact.py` | ASSUMED |
-| Sweep sensitivitas | n=38, skenario 2026; T_max [24, 48, 72, 120] jam; g0 [0, 0.005, 0.01, 0.02] | `config.yaml: analysis.sensitivity` | ASSUMED |
+| Sweep sensitivitas | n=38, skenario 2026; T_max 24; 48; 72; 120 jam; g0 0; 0,005; 0,01; 0,02 | `config.yaml: analysis.sensitivity` | ASSUMED |
 | Mode cepat (`--quick`) | n [6, 10], 3 seed, budget 300 | `config.yaml: quick` | ASSUMED |
 <!-- /AUTO:provenance -->
 
@@ -65,13 +65,13 @@ Tabel ini juga dibuat otomatis oleh `python -m src.docs_gen`, dari `config.yaml`
 |:--|:--|:--|:--|
 | Snapshot hotspot VIIRS 7 hari | NASA FIRMS VIIRS S-NPP 375 m, Asia Tenggara, diunduh 2026-10-20 06:30 UTC | `data/external/firms/SUOMI_VIIRS_C2_SouthEast_Asia_7d_2026-10-20.csv` (+ `.source.txt`) | REAL |
 | Filter confidence | nominal/high | `config.yaml: firms.confidence` | ASSUMED |
-| Bounding box | Sumatra [-6.0, 6.0, 95.0, 106.0]; Kalimantan [-4.5, 4.5, 108.5, 119.0] ([lat_min, lat_max, lon_min, lon_max], kotak kasar pulau) | `config.yaml: firms.bboxes` | ASSUMED |
+| Bounding box | Sumatra [-6,0, 6,0, 95,0, 106,0]; Kalimantan [-4,5, 4,5, 108,5, 119,0] ([lat_min, lat_max, lon_min, lon_max], kotak kasar pulau) | `config.yaml: firms.bboxes` | ASSUMED |
 | Hotspot setelah filter | 28983 (Kalimantan 22152, Sumatra 6831) | `results/tables/firms_instances.md` | DERIVED |
 | Jumlah Klaster hotspot k | 50, 100, 200 (instance = k node + Depot) | `config.yaml: firms.sizes` | ASSUMED |
 | Klasterisasi | k-means (Lloyd, seeding k-means++), seed 0, atas (lat, lon·cos lat) | `src/firms.py`, `config.yaml: firms.kmeans_seed` | ASSUMED |
 | Lokasi node klaster | pusat klaster; hotspot anggota terdekat bila pusatnya jatuh di luar kotak (klaster lintas wilayah) | `src/firms.py` | DERIVED |
 | Risiko klaster | Σ FRP → log1p → min-max antar-klaster dalam satu instance | `src/firms.py` | DERIVED |
-| Laju decay klaster | konstan g0 = 0.01 /jam (tanpa data operasional, κ tidak dipakai) | `docs/adr/0001-firms-clusters-instead-of-synthetic.md` | ASSUMED |
+| Laju decay klaster | konstan g0 = 0,01 /jam (tanpa data operasional, κ tidak dipakai) | `docs/adr/0001-firms-clusters-instead-of-synthetic.md` | ASSUMED |
 | Depot FIRMS | Pekanbaru (ibu kota provinsi Riau) | `config.yaml: depot` | ASSUMED |
 | Batas waktu misi FIRMS | 72 jam (tidak ada kandidat dalam target, dipilih yang terdekat: 39% klaster terkunjungi) | kalibrasi Greedy k=100, kandidat 24 jam → 13%, 48 jam → 23%, 72 jam → 39%, 120 jam → 73%, target 40%–60% (`src/calibration.py`; hasil: `results/tables/firms_calibration.md`) | DERIVED |
 | Budget evaluasi FIRMS | 100000 | `config.yaml: firms.budget` | ASSUMED |

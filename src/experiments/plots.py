@@ -2,8 +2,29 @@
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter
+from src.numfmt import id_format
 
 DPI = 300
+
+
+class _IdScalarFormatter(ScalarFormatter):
+    """Linear-axis tick labels with a decimal comma."""
+    def __call__(self, x, pos=None):
+        return super().__call__(x, pos).replace(".", ",")
+
+    def get_offset(self):
+        return super().get_offset().replace(".", ",")
+
+
+def save(fig, path):
+    """Write fig at 300 dpi with Indonesian tick labels on every linear axis, then close it."""
+    for ax in fig.axes:
+        for axis in (ax.xaxis, ax.yaxis):
+            f = axis.get_major_formatter()
+            if axis.get_scale() == "linear" and type(f) is ScalarFormatter:
+                axis.set_major_formatter(_IdScalarFormatter())
+    fig.savefig(path, dpi=DPI, bbox_inches="tight"); plt.close(fig)
 
 
 def boxplot_fitness(runs, n, algorithms, path):
@@ -19,42 +40,60 @@ def boxplot_fitness(runs, n, algorithms, path):
         ax.grid(axis="y", alpha=.3)
     seeds = sub.seed.nunique()
     fig.suptitle(f"Sebaran fitness akhir {seeds} seed per algoritma (n = {n})")
-    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+    fig.tight_layout(); save(fig, path)
 
 
 def route_map(coords, inst, route_detail, title, path):
-    """Lon/lat case-study map: Depot, numbered Kunjungan with arrival-time labels and direction arrows,
-    and Node dilewati marked separately (labelled with their Risiko)."""
-    c = coords.set_index("Provinsi"); route = route_detail["route"]
+    """Lon/lat case-study map: Depot, numbered Kunjungan with direction arrows, and Node dilewati marked
+    with letters. Province names, arrival times and the Risiko of skipped nodes are listed in a side
+    panel so labels never overlap on the map."""
+    c = coords.set_index("Provinsi"); route = route_detail["route"]; skipped = route_detail["skipped"]
     def xy(name): return float(c.loc[name, "lon"]), float(c.loc[name, "lat"])
     depot = inst.names[inst.depot]
-    fig, ax = plt.subplots(figsize=(12, 7.5))
+    fig = plt.figure(figsize=(16, 5.2))
+    grid = fig.add_gridspec(1, 3, width_ratios=[3.3, .85, .8], wspace=.06)
+    ax = fig.add_subplot(grid[0]); panels = [fig.add_subplot(grid[i]) for i in (1, 2)]
     stops = [depot] + [node["province"] for node in route] + ([depot] if route else [])
     for a, b in zip(stops, stops[1:]):
         ax.annotate("", xy=xy(b), xytext=xy(a),
-                    arrowprops={"arrowstyle": "-|>", "lw": .9, "color": "tab:blue", "shrinkA": 5, "shrinkB": 5})
+                    arrowprops={"arrowstyle": "-|>", "lw": .9, "color": "tab:blue", "shrinkA": 6, "shrinkB": 6})
     if route:
-        ax.scatter(*zip(*[xy(node["province"]) for node in route]), s=70, c="tab:blue", zorder=3,
-                   label=f"Kunjungan ({len(route)})")
+        ax.scatter(*zip(*[xy(node["province"]) for node in route]), s=130, c="tab:blue", zorder=3,
+                   label=f"Kunjungan ({len(route)}), bernomor urut")
     for k, node in enumerate(route, 1):
-        x, y = xy(node["province"])
-        ax.text(x, y, str(k), color="white", fontsize=6, ha="center", va="center", zorder=4, fontweight="bold")
-        ax.annotate(f'{k}. {node["province"]}\ntiba {node["arrival_h"]:.1f} jam', (x, y), xytext=(5, 4),
-                    textcoords="offset points", fontsize=6.5)
-    skipped = route_detail["skipped"]
+        ax.text(*xy(node["province"]), str(k), color="white", fontsize=6.5, ha="center", va="center", zorder=4,
+                fontweight="bold")
+    letters = [chr(ord("A") + i) for i in range(len(skipped))]
     if skipped:
-        ax.scatter(*zip(*[xy(s["province"]) for s in skipped]), marker="x", s=40, c="gray", zorder=3,
-                   label=f"Node dilewati ({len(skipped)})")
-        for s in skipped:
-            ax.annotate(f'{s["province"]} (Risiko {s["risk"]:.2f})', xy(s["province"]), xytext=(4, -8),
-                        textcoords="offset points", fontsize=5.5, color="gray")
-    ax.scatter(*xy(depot), marker="*", s=280, c="red", zorder=5, label=f"Depot ({depot})")
-    ax.set_title(f"{title}\nTotal Prize {route_detail['fitness']:.3f}; waktu misi "
-                 f"{route_detail['mission_time_h']:.1f} dari {inst.time_limit:g} jam; jarak "
-                 f"{route_detail['distance_km']:.0f} km", fontsize=10)
+        ax.scatter(*zip(*[xy(s["province"]) for s in skipped]), marker="x", s=45, c="gray", zorder=3,
+                   label=f"Node dilewati ({len(skipped)}), berhuruf")
+        for letter, s in zip(letters, skipped):
+            ax.annotate(letter, xy(s["province"]), xytext=(4, 3), textcoords="offset points", fontsize=7.5,
+                        color="dimgray", fontweight="bold")
+    ax.scatter(*xy(depot), marker="*", s=320, c="red", zorder=5, label=f"Depot ({depot})")
+    lons, lats = zip(*[xy(p) for p in c.index if p in inst.names])
+    ax.set_xlim(min(lons) - 1.5, max(lons) + 1.5); ax.set_ylim(min(lats) - 1.5, max(lats) + 1.5)
     ax.set_xlabel("Bujur (°BT)"); ax.set_ylabel("Lintang (°)"); ax.grid(alpha=.3); ax.set_aspect("equal")
     ax.legend(loc="lower left", fontsize=8)
-    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+    ax.set_title(f"{title}\nTotal Prize {id_format(route_detail['fitness'], '.3f')}; waktu misi "
+                 f"{id_format(route_detail['mission_time_h'], '.1f')} dari {id_format(inst.time_limit, 'g')} jam; "
+                 f"jarak {id_format(route_detail['distance_km'], ',.0f')} km", fontsize=10)
+
+    columns = [[("Urutan Kunjungan", "tiba", True)]
+               + [(f"{k}. {node['province']}", f"{id_format(node['arrival_h'], '.1f')} jam", False)
+                  for k, node in enumerate(route, 1)],
+               [("Node dilewati", "Risiko", True)]
+               + [(f"{letter}. {s['province']}", id_format(s["risk"], ".2f"), False)
+                  for letter, s in zip(letters, skipped)]]
+    step = 1 / max(len(col) for col in columns)
+    for panel, lines in zip(panels, columns):
+        panel.axis("off")
+        for i, (left, right, bold) in enumerate(lines):
+            y = 1 - i * step; weight = "bold" if bold else "normal"
+            panel.text(0, y, left, fontsize=7.5, va="top", fontweight=weight, transform=panel.transAxes)
+            panel.text(1, y, right, fontsize=7.5, va="top", ha="right", fontweight=weight,
+                       transform=panel.transAxes)
+    save(fig, path)
 
 
 def convergence(conv, n, algorithms, path):
@@ -74,7 +113,7 @@ def convergence(conv, n, algorithms, path):
         ax.set_ylabel("Fitness terbaik sejauh ini (total Prize)"); ax.grid(alpha=.3); ax.legend(title="Algoritma")
     seeds = int(sub.seeds.max())
     fig.suptitle(f"Kurva konvergensi: rata-rata ± simpangan baku {seeds} seed (n = {n})")
-    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+    fig.tight_layout(); save(fig, path)
 
 
 def scalability(table, algorithms, path):
@@ -93,7 +132,7 @@ def scalability(table, algorithms, path):
             ax.set_title(f"Skenario {sc}"); ax.set_xlabel("Ukuran instance n (termasuk Depot)")
             ax.set_xticks(sorted(s.n.unique())); ax.grid(alpha=.3); ax.legend(title="Algoritma")
     fig.suptitle("Skalabilitas: runtime dan kualitas solusi terhadap ukuran instance")
-    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+    fig.tight_layout(); save(fig, path)
 
 
 SENSITIVITY_LABEL = {"time_limit_hours": "Batas waktu misi T_max (jam)", "decay_g0": "Laju decay dasar g0 (per jam)"}
@@ -118,7 +157,7 @@ def sensitivity(table, algorithms, path):
         axes[0, col].set_title(f"Sensitivitas terhadap {SENSITIVITY_LABEL.get(p, p).split(' (')[0]}")
     n, sc, seeds = int(table.n.iloc[0]), table.scenario.iloc[0], int(table.runs.max())
     fig.suptitle(f"Analisis sensitivitas (n = {n}, skenario {sc}, {seeds} seed; parameter lain tetap default)")
-    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+    fig.tight_layout(); save(fig, path)
 
 
 def boxplot_fitness_firms(runs, algorithms, path):
@@ -132,7 +171,7 @@ def boxplot_fitness_firms(runs, algorithms, path):
         ax.set_title(f"FIRMS k = {k}"); ax.set_xlabel("Algoritma"); ax.set_ylabel("Fitness akhir (total Prize)")
         ax.grid(axis="y", alpha=.3)
     fig.suptitle(f"Instance FIRMS: sebaran fitness akhir {runs.seed.nunique()} seed per algoritma")
-    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+    fig.tight_layout(); save(fig, path)
 
 
 def scalability_combined(table, algorithms, path, province_scenario="2026"):
@@ -163,7 +202,7 @@ def scalability_combined(table, algorithms, path, province_scenario="2026"):
     axes[1].legend(fontsize=6.5, ncol=2, loc="lower left")
     fig.suptitle(f"Skalabilitas gabungan: instance provinsi (garis penuh, skenario {province_scenario}) "
                  "dan instance FIRMS (garis putus-putus)")
-    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+    fig.tight_layout(); save(fig, path)
 
 
 def firms_cluster_map(hotspots, nodes, depot, inst, route_detail, bboxes, title, path):
@@ -172,7 +211,7 @@ def firms_cluster_map(hotspots, nodes, depot, inst, route_detail, bboxes, title,
     from matplotlib.patches import Rectangle
     fig, ax = plt.subplots(figsize=(13, 7.5))
     ax.scatter(hotspots.lon, hotspots.lat, s=1, c="lightgray", alpha=.5, rasterized=True,
-               label=f"Hotspot VIIRS ({len(hotspots)})")
+               label=f"Hotspot VIIRS ({id_format(len(hotspots), ',d')})")
     for name, (lat0, lat1, lon0, lon1) in bboxes.items():
         ax.add_patch(Rectangle((lon0, lat0), lon1 - lon0, lat1 - lat0, fill=False, ls=":", lw=.8, color="gray"))
         ax.text(lon0 + .1, lat1 - .1, f"Bounding box {name}", fontsize=7, va="top", color="gray")
@@ -186,16 +225,20 @@ def firms_cluster_map(hotspots, nodes, depot, inst, route_detail, bboxes, title,
     visited = {v["province"] for v in route}
     v = nodes[nodes.name.isin(visited)]; sk = nodes[~nodes.name.isin(visited)]
     sc = ax.scatter(v.lon, v.lat, c=v.risk, cmap="YlOrRd", vmin=0, vmax=1, s=45, edgecolors="k", linewidths=.5,
-                    zorder=3, label=f"Klaster dikunjungi ({len(v)})")
+                    zorder=3, label=f"Klaster dikunjungi ({len(v)}; nomor urut tiap kelipatan 5)")
     ax.scatter(sk.lon, sk.lat, facecolors="none", edgecolors=plt.cm.YlOrRd(sk.risk.to_numpy()), s=30,
                linewidths=1.2, zorder=3, label=f"Node dilewati ({len(sk)})")
-    for i, node in enumerate(route, 1):
-        ax.annotate(str(i), pos[node["province"]], xytext=(3, 3), textcoords="offset points", fontsize=5.5)
+    for i, node in enumerate(route, 1):  # numbering every 5th Kunjungan (plus first/last) keeps dense areas legible
+        if i == 1 or i == len(route) or i % 5 == 0:
+            ax.annotate(str(i), pos[node["province"]], xytext=(4, 4), textcoords="offset points", fontsize=6.5,
+                        fontweight="bold", zorder=6, bbox={"boxstyle": "round,pad=.15", "fc": "white", "ec": "none",
+                                                          "alpha": .85})
     ax.scatter(depot["lon"], depot["lat"], marker="*", s=300, c="blue", zorder=5, label=f"Depot ({depot['name']})")
     fig.colorbar(sc, ax=ax, shrink=.7, label="Risiko klaster (Σ FRP → log1p → min-max)")
-    ax.set_title(f"{title}\nTotal Prize {route_detail['fitness']:.3f}; {len(route)} Kunjungan; waktu misi "
-                 f"{route_detail['mission_time_h']:.1f} dari {inst.time_limit:g} jam; jarak "
-                 f"{route_detail['distance_km']:.0f} km", fontsize=10)
+    ax.set_title(f"{title}\nTotal Prize {id_format(route_detail['fitness'], '.3f')}; {len(route)} Kunjungan; "
+                 f"waktu misi {id_format(route_detail['mission_time_h'], '.1f')} dari "
+                 f"{id_format(inst.time_limit, 'g')} jam; jarak {id_format(route_detail['distance_km'], ',.0f')} km",
+                 fontsize=10)
     ax.set_xlabel("Bujur (°BT)"); ax.set_ylabel("Lintang (°)"); ax.grid(alpha=.3); ax.set_aspect("equal")
     ax.legend(loc="lower left", fontsize=7)
-    fig.tight_layout(); fig.savefig(path, dpi=DPI); plt.close(fig)
+    fig.tight_layout(); save(fig, path)

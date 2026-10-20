@@ -4,6 +4,7 @@ import logging
 import re
 import numpy as np
 import pandas as pd
+from src.numfmt import id_format
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw"
@@ -129,7 +130,8 @@ def add_risk(merged, weights=DEFAULT_WEIGHTS, gamma=DEFAULT_GAMMA):
     return merged
 
 def _md(df):
-    return df.to_markdown(index=False, floatfmt=".4g")
+    from src.experiments.reporting import to_markdown_id
+    return to_markdown_id(df)
 
 def write_quality_report(path, merged, checks, disc):
     riau = merged.set_index("Provinsi").loc["Riau"]
@@ -150,7 +152,7 @@ def write_quality_report(path, merged, checks, disc):
       "", "Selisih dilaporkan apa adanya, tidak direkonsiliasi. Perbedaan tanggal laporan atau definisi dapat menjelaskan sebagian selisih.",
       "", "## Inkonsistensi Riau", "",
       f"Riau mencatat Total Hotspot = {riau['Total Hotspot_num']:g}, tetapi Fire Spot = {riau['Fire Spot_num']:g}, "
-      f"kualitas udara \"{riau['Kualitas Udara (PM 25)']}\", dan luas terbakar indikatif {riau['Lahan Terbakar Indikatif (Ha)_num']:,.2f} ha. "
+      f"kualitas udara \"{riau['Kualitas Udara (PM 25)']}\", dan luas terbakar indikatif {id_format(riau['Lahan Terbakar Indikatif (Ha)_num'], ',.2f')} ha. "
       "Karena itu jumlah hotspot **tidak pernah** dipakai sendirian sebagai ukuran keparahan.",
       "", "## Risiko provinsi operasional", "", _md(ops[["Provinsi","hist_norm","cur_2026_norm","ops_norm","risk_2026","risk_2019"]].rename(columns={
           "hist_norm":"historis","cur_2026_norm":"tahun_berjalan_2026","ops_norm":"operasional",

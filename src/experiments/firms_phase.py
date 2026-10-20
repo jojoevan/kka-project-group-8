@@ -22,7 +22,7 @@ from src.config import cluster_mission_params
 from src.data_prep import ROOT
 from src.experiments import plots
 from src.experiments.records import HEURISTICS, run_record
-from src.experiments.reporting import (FIRMS_CALIBRATION_ID, FIRMS_CLUSTERS_ID, FIRMS_INSTANCES_ID, HC_COST_ID,
+from src.experiments.reporting import (to_markdown_id, FIRMS_CALIBRATION_ID, FIRMS_CLUSTERS_ID, FIRMS_INSTANCES_ID, HC_COST_ID,
                                        SCALABILITY_COMBINED_ID, SUMMARY_ID, WILCOXON_ID, write_table)
 from src.experiments.stats import scalability_table, summary_table, wilcoxon_holm_table
 from src.firms import build_firms_instance, load_hotspots
@@ -184,7 +184,7 @@ def ranking_report(province_summary, province_wilcoxon, firms_summary, firms_wil
                    if any_tie else "**tetap berlaku** pada semua instance FIRMS.")
         lines += ["", "Kesimpulan: peringkat provinsi " + verdict]
     table = pd.DataFrame(rows)
-    return "\n".join(lines) + "\n\n" + table.to_markdown(index=False) + "\n", table
+    return "\n".join(lines) + "\n\n" + to_markdown_id(table) + "\n", table
 
 
 def combined_scalability(province_runs, firms_runs, algorithms):

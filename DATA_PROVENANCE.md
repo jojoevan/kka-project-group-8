@@ -58,16 +58,29 @@ Catatan:
 
 ## Instance Klaster hotspot FIRMS
 
-<!-- FIRMS: isi setelah #6 -->
+Tabel ini juga dibuat otomatis oleh `python -m src.docs_gen`, dari `config.yaml`, konstanta di kode, dan tabel hasil FIRMS tersimpan (`results/tables/firms_*.csv`).
 
+<!-- AUTO:provenance-firms -->
 | parameter | nilai | sumber | status |
 |:--|:--|:--|:--|
-| Snapshot hotspot VIIRS 7 hari | _(tanggal unduh)_ | _(path file snapshot)_ | REAL |
-| Filter confidence | nominal/high | _(modul FIRMS)_ | ASSUMED |
-| Bounding box Sumatra + Kalimantan | _(koordinat)_ | _(modul FIRMS)_ | ASSUMED |
-| Jumlah klaster k | 50, 100, 200 | _(config)_ | ASSUMED |
-| Seed k-means | _(nilai)_ | _(config)_ | ASSUMED |
-| Risiko klaster | Σ FRP → log1p → min-max antar-klaster | _(modul FIRMS)_ | DERIVED |
-| Laju decay klaster | konstan `g0` | ADR-0001 | ASSUMED |
-| Batas waktu misi FIRMS | _(hasil kalibrasi)_ | `src/calibration.py` | DERIVED |
-| Budget evaluasi FIRMS | 100000 | _(config)_ | ASSUMED |
+| Snapshot hotspot VIIRS 7 hari | NASA FIRMS VIIRS S-NPP 375 m, Asia Tenggara, diunduh 2026-10-20 06:30 UTC | `data/external/firms/SUOMI_VIIRS_C2_SouthEast_Asia_7d_2026-10-20.csv` (+ `.source.txt`) | REAL |
+| Filter confidence | nominal/high | `config.yaml: firms.confidence` | ASSUMED |
+| Bounding box | Sumatra [-6.0, 6.0, 95.0, 106.0]; Kalimantan [-4.5, 4.5, 108.5, 119.0] ([lat_min, lat_max, lon_min, lon_max], kotak kasar pulau) | `config.yaml: firms.bboxes` | ASSUMED |
+| Hotspot setelah filter | 28983 (Kalimantan 22152, Sumatra 6831) | `results/tables/firms_instances.md` | DERIVED |
+| Jumlah Klaster hotspot k | 50, 100, 200 (instance = k node + Depot) | `config.yaml: firms.sizes` | ASSUMED |
+| Klasterisasi | k-means (Lloyd, seeding k-means++), seed 0, atas (lat, lon·cos lat) | `src/firms.py`, `config.yaml: firms.kmeans_seed` | ASSUMED |
+| Lokasi node klaster | pusat klaster; hotspot anggota terdekat bila pusatnya jatuh di luar kotak (klaster lintas wilayah) | `src/firms.py` | DERIVED |
+| Risiko klaster | Σ FRP → log1p → min-max antar-klaster dalam satu instance | `src/firms.py` | DERIVED |
+| Laju decay klaster | konstan g0 = 0.01 /jam (tanpa data operasional, κ tidak dipakai) | `docs/adr/0001-firms-clusters-instead-of-synthetic.md` | ASSUMED |
+| Depot FIRMS | Pekanbaru (ibu kota provinsi Riau) | `config.yaml: depot` | ASSUMED |
+| Batas waktu misi FIRMS | 72 jam (tidak ada kandidat dalam target, dipilih yang terdekat: 39% klaster terkunjungi) | kalibrasi Greedy k=100, kandidat 24 jam → 13%, 48 jam → 23%, 72 jam → 39%, 120 jam → 73%, target 40%–60% (`src/calibration.py`; hasil: `results/tables/firms_calibration.md`) | DERIVED |
+| Budget evaluasi FIRMS | 100000 | `config.yaml: firms.budget` | ASSUMED |
+| Mode cepat FIRMS (`--quick`) | k [3, 6], 2 seed, budget 300 | `config.yaml: firms.quick` | ASSUMED |
+<!-- /AUTO:provenance-firms -->
+
+Catatan:
+
+- **Kalibrasi Batas waktu misi FIRMS jatuh ke nilai cadangan.** Tidak ada kandidat yang masuk target 40–60% pada k=100, sehingga dipilih kandidat terdekat, 72 jam (39% klaster terkunjungi; `results/tables/firms_calibration.md`). Karena satu batas dipakai untuk semua k, fraksi terkunjungi Greedy adalah 72% pada k=50 dan 22,5% pada k=200 (`results/tables/firms_instances.md`). Pada k=50, masalahnya lebih longgar daripada target kalibrasi.
+- **Bounding box adalah kotak kasar** (ASSUMED). Sekitar 260 hotspot di Malaysia (±60 di Semenanjung Malaysia, ±200 di Sarawak/Sabah) ikut masuk kotak. Angka ini perkiraan yang dicatat saat unduh di `data/external/firms/SUOMI_VIIRS_C2_SouthEast_Asia_7d_2026-10-20.source.txt`. Jumlahnya kurang dari 1% dari 28.983 hotspot setelah filter.
+- **Risiko klaster tidak sebanding dengan Risiko provinsi.** Risiko klaster dinormalisasi per instance (lihat `GLOSSARY.md`), sedangkan Risiko provinsi dinormalisasi sekali atas 38 provinsi. Akibatnya, fitness FIRMS hanya bisa dibandingkan antar-algoritma dalam k yang sama, tidak antar-k dan tidak dengan instance provinsi.
+- Snapshot mentah disimpan apa adanya (SHA-256 di file `.source.txt`). Pipeline tidak pernah membaca feed langsung, karena feed 7 hari terus bergeser.

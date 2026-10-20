@@ -177,6 +177,17 @@ Aturan ini ditetapkan **sebelum** eksperimen dijalankan:
 6. **Batas waktu misi dikalibrasi**, bukan dipilih bebas. Greedy pada n=38 skenario 2026 memilih nilai terkecil dari {24, 48, 72, 120} jam yang membuat 40–60% node terkunjungi. Hasilnya 72 jam (`results/tables/instances.md`).
 7. **Reproducible.** Satu perintah (`python -m src.experiments.run_all`) menghasilkan ulang semua tabel, gambar, rute, dan uji statistik. Setiap run hanya bergantung pada (instance, algoritma, seed).
 
-<!-- FIRMS: isi setelah #6 -->
+## 2.7 Instance Klaster hotspot FIRMS
 
-_(Subbab 2.7 Instance Klaster hotspot FIRMS: sumber snapshot VIIRS, filter confidence dan bounding box, k-means k ∈ {50, 100, 200}, Risiko klaster = Σ FRP → log1p → min-max, decay konstan g0, dan budget 100.000.)_
+Instance provinsi paling besar hanya 38 node, sehingga belum cukup untuk menguji skalabilitas. Instance besar dibangun dari data nyata, bukan dari generator sintetis (ADR-0001).
+
+1. **Sumber.** Snapshot hotspot NASA FIRMS VIIRS (Suomi NPP, 375 m) 7 hari terakhir untuk Asia Tenggara, diunduh 2026-10-20 06:30 UTC dari feed publik. File mentah disimpan apa adanya di `data/external/firms/`, karena feed 7 hari terus bergeser.
+2. **Filter.** Hanya hotspot dengan confidence nominal atau high yang dipakai, dan hanya yang berada di dalam salah satu dari dua bounding box: Sumatra (lintang −6° s.d. 6°, bujur 95° s.d. 106° BT) dan Kalimantan (lintang −4,5° s.d. 4,5°, bujur 108,5° s.d. 119° BT). Kotak ini kasar (ASSUMED), sehingga sekitar 260 hotspot di Malaysia ikut masuk.
+3. **Klasterisasi.** Hotspot diklaster dengan k-means (Lloyd, seeding k-means++, seed 0) pada koordinat (lat, lon·cos lat), untuk k ∈ {50, 100, 200}. Setiap klaster menjadi satu node di pusat klaster. Jika pusatnya jatuh di luar kotak (klaster berisi hotspot dari dua wilayah), node ditempatkan di hotspot anggota yang paling dekat ke pusat. Instance terdiri dari k node ditambah Depot.
+4. **Risiko klaster.** Risiko klaster = Σ FRP hotspot anggota → log1p → min-max antar-klaster dalam satu instance. Berbeda dari Risiko provinsi yang dinormalisasi sekali atas 38 provinsi, Risiko klaster bergantung pada k. Karena itu, fitness hanya dibandingkan antar-algoritma dalam k yang sama.
+5. **Decay.** Klaster tidak punya data operasional, sehingga laju decay-nya konstan, g_i = g0 = 0,01/jam.
+6. **Misi.** Depot, kecepatan, faktor detour, dan waktu tinggal sama dengan instance provinsi. Jarak antar-node dihitung dengan Haversine × 1,15.
+7. **Batas waktu misi FIRMS** dikalibrasi dengan utilitas yang sama seperti instance provinsi (subbab 2.6 butir 6), sekali pada k=100, lalu dipakai untuk semua k. Tidak ada kandidat yang memberi 40–60% klaster terkunjungi, sehingga yang dipilih adalah kandidat terdekat, 72 jam (39% klaster terkunjungi; `results/tables/firms_calibration.md`).
+8. **Eksperimen.** Greedy, HC, SA, dan GA dijalankan dengan 30 seed per k dan budget evaluasi 100.000 per run. Aturan keadilan subbab 2.6 tetap berlaku. Exact tidak dijalankan.
+
+Nilai setiap parameter beserta statusnya ada di `DATA_PROVENANCE.md` (bagian Instance Klaster hotspot FIRMS).

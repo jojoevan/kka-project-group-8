@@ -45,16 +45,20 @@ Setiap gambar (300 dpi) dan tabel hasil di `results/`, masing-masing dengan capt
 
 **Data mentah pendukung** (tanpa caption, tidak masuk laporan secara langsung):
 
-- `results/raw/runs.csv`: satu baris per run (fitness, runtime, evaluasi, fitness single-start HC, restart HC, acceptance rate SA, generasi GA).
+- `results/raw/runs.csv`: satu baris per run (fitness, runtime, evaluasi, fitness single-start HC, restart dan langkah naik HC, acceptance rate SA, suhu SA (T0, laju pendinginan, suhu akhir), generasi GA).
 - `results/raw/sensitivity_runs.csv`: satu baris per run sweep sensitivitas.
 - `results/raw/histories.jsonl.gz`: riwayat konvergensi (evaluasi, best-so-far) per run.
 - `results/tables/convergence.csv`: data kurva konvergensi.
 - `results/routes/best_route_{2019,2026}_n{6,10,15,25,38}.json`: detail rute terbaik setiap instance.
+- `results/raw/firms_runs.csv`: satu baris per run FIRMS (kolom sama dengan `runs.csv`, ditambah k dan Batas waktu misi).
+- `results/raw/firms_histories.jsonl.gz`: riwayat konvergensi per run FIRMS.
+- `results/routes/best_route_firms_k{50,100,200}.json`: detail rute terbaik setiap instance FIRMS.
 
 ## Instance FIRMS
 
-<!-- FIRMS: isi setelah #6 -->
+Gambar dan tabel FIRMS sudah masuk daftar di atas (nama file berawalan `firms_`, ditambah `scalability_combined`). Yang paling relevan untuk laporan:
 
-- _(gambar skalabilitas gabungan provinsi + FIRMS)_
-- _(peta sebaran klaster dengan rute terbaik, k=100)_
-- _(tabel ringkasan skalabilitas FIRMS)_
+- `results/figures/scalability_combined.png`: skalabilitas gabungan provinsi + FIRMS (Bab 3.5.1).
+- `results/figures/firms_cluster_map_k100.png`: peta sebaran klaster dengan rute terbaik k=100.
+- `results/tables/firms_summary.md` dan `results/tables/firms_ranking.md`: ringkasan 30 seed per k dan pernyataan apakah peringkat provinsi tetap berlaku.
+- `results/tables/firms_hc_cost.md`: data biaya per langkah HC yang O(n²).

@@ -7,12 +7,13 @@
 ## 3.1 Setup eksperimen
 
 - **Instance**: provinsi, n ∈ {6, 10, 15, 25, 38} termasuk Depot (Riau), dengan Skenario tahun 2019 dan 2026. Ringkasannya ada di `results/tables/instances.md`.
+- **Instance FIRMS** (fase 2): Klaster hotspot k ∈ {50, 100, 200}, budget 100.000, Batas waktu misi 72 jam (Bab 2.7). Ringkasannya ada di `results/tables/firms_instances.md`, dan hasilnya di subbab 3.5.1.
 - **Parameter misi**: kecepatan 200 km/jam, faktor detour 1.15, waktu tinggal 1 jam, g0 = 0.01/jam, κ = 1.0. Batas waktu misi 72 jam berasal dari kalibrasi: Greedy pada n=38 skenario 2026 mengunjungi 21 dari 37 node kandidat (`results/tables/instances.md`). Daftar lengkap ada di `DATA_PROVENANCE.md`.
 - **Batas waktu misi tidak mengikat pada n=6 dan n=10.** Greedy mengunjungi semua node kandidat dalam 24.38 jam (2019, n=6), 59.03 jam (2019, n=10), 25.83 jam (2026, n=6), dan 54.32 jam (2026, n=10) (`results/tables/instances.md`). Pada ukuran ini masalahnya mendekati TSP dengan Prize meluruh.
 - **Algoritma**: Greedy, HC, SA, dan GA untuk semua instance. Exact hanya untuk n=6.
 - **Budget evaluasi**: 20.000 (n ≤ 15) dan 50.000 (n ≥ 25).
 - **Jumlah seed**: 30 seed per (algoritma, n, Skenario tahun).
-- **Total run**: 1.202 run perbandingan utama dan 960 run sweep sensitivitas. Runtime total 687.4 detik dengan 12 worker (`results/logs/run_all.log`).
+- **Total run**: 1.202 run perbandingan utama dan 960 run sweep sensitivitas. Ditambah 360 run FIRMS (fase 2), runtime total 1.231,7 detik dengan 12 worker (`results/logs/run_all.log`).
 - **Metrik**:
   - Fitness akhir (total Prize): best, mean, std, dan median.
   - Runtime.
@@ -56,7 +57,7 @@ Sumber: `results/tables/optimality_gap.md`. Exact hanya praktis sampai 9 node te
 
 - HC, SA, dan GA mencapai optimum Exact di **semua** 30 seed untuk kedua Skenario tahun: gap 0%, proporsi optimal 1. Optimumnya 4.101 (2019) dan 3.244 (2026).
 - Greedy optimal pada 2019. Pada 2026, Greedy meleset 1.704%.
-- Exact memeriksa 326 urutan feasible dalam 0.0056–0.0067 detik (`results/tables/summary.md`).
+- Exact memeriksa 326 urutan feasible dalam 0.0057–0.0069 detik (`results/tables/summary.md`).
 
 Hasil ini memvalidasi implementasi decoder dan ketiga metaheuristik, karena tidak ada heuristik yang melampaui optimum. Namun gap di n=6 tidak cukup untuk membedakan HC, SA, dan GA. Untuk n ≥ 10, kualitas diukur relatif terhadap best-known, yang bukan optimum terbukti.
 
@@ -75,7 +76,7 @@ Sumber: Gambar 3.2 `results/figures/convergence_n25.png`, Gambar 3.3 `results/fi
 
 Sumber: Gambar 3.4 `results/figures/scalability.png` dan `results/tables/scalability.md`.
 
-- **Runtime.** Greedy membutuhkan ≈0.0001–0.002 detik. HC, SA, dan GA membutuhkan beberapa detik per run. Pada 2026 n=38, runtime rata-ratanya 4.777 detik (HC), 7.354 detik (SA), dan 9.159 detik (GA). Karena budget evaluasinya sama, perbedaan runtime mencerminkan *overhead* per evaluasi: OX dan manajemen populasi di GA, serta kalkulasi move dan penerimaan di SA.
+- **Runtime.** Greedy membutuhkan ≈0.0001–0.002 detik. HC, SA, dan GA membutuhkan beberapa detik per run. Pada 2026 n=38, runtime rata-ratanya 4.320 detik (HC), 6.708 detik (SA), dan 8.437 detik (GA). Karena budget evaluasinya sama, perbedaan runtime mencerminkan *overhead* per evaluasi: OX dan manajemen populasi di GA, serta kalkulasi move dan penerimaan di SA.
 - **Kualitas (% best-known).**
   - SA bertahan di atas 97% untuk semua n: 97.21% (2019 n=38) dan 98.97% (2026 n=38).
   - HC turun ke ≈95% di n=38: 94.98% (2019) dan 94.93% (2026).
@@ -85,9 +86,52 @@ Sumber: Gambar 3.4 `results/figures/scalability.png` dan `results/tables/scalabi
 
 ### 3.5.1 Skalabilitas pada instance Klaster hotspot FIRMS
 
-<!-- FIRMS: isi setelah #6 -->
+Sumber: Gambar 3.7 `results/figures/scalability_combined.png`, Gambar 3.8 `results/figures/firms_cluster_map_k100.png`, `results/tables/firms_summary.md`, `results/tables/firms_wilcoxon_holm.md`, `results/tables/firms_ranking.md`, `results/tables/firms_hc_cost.md`, dan `results/tables/scalability_combined.md`. Setup instance ada di Bab 2.7: 30 seed × {Greedy, HC, SA, GA} × k ∈ {50, 100, 200}, budget 100.000, dan Batas waktu misi 72 jam.
 
-_(Hasil 30 seed × {Greedy, HC, SA, GA} × k ∈ {50, 100, 200}, budget 100.000. Grafik skalabilitas gabungan provinsi + FIRMS. Penjelasan biaya per langkah HC yang O(n²) berdasarkan data. Pernyataan apakah peringkat algoritma pada instance provinsi tetap berlaku pada instance FIRMS.)_
+**Tabel 3.2** Fitness rata-rata per algoritma pada instance FIRMS.
+
+<!-- AUTO:firms-summary -->
+| k | Batas waktu misi (jam) | klaster terkunjungi Greedy | best-known | Greedy rata-rata | HC rata-rata | SA rata-rata | GA rata-rata | peringkat (= berarti seri) |
+|:--|:--|:--|:--|:--|:--|:--|:--|:--|
+| 50 | 72 | 36 (72%) | 22.436 | 19.707 | 18.903 | **22.388** | 18.614 | SA > Greedy > HC > GA |
+| 100 | 72 | 39 (39%) | 24.618 | 19.940 | 13.042 | **24.269** | 15.276 | SA > Greedy > GA > HC |
+| 200 | 72 | 45 (22%) | 27.204 | 20.936 | 10.497 | **26.350** | 14.286 | SA > Greedy > GA > HC |
+<!-- /AUTO:firms-summary -->
+
+**Catatan setup.** Kalibrasi Batas waktu misi FIRMS jatuh ke nilai cadangan. Pada k=100, 72 jam memberi 39% klaster terkunjungi dan 120 jam memberi 73%, sehingga tidak ada kandidat dalam target 40–60% (`results/tables/firms_calibration.md`). Dengan batas yang sama, Greedy mengunjungi 72% klaster pada k=50 dan 22,5% pada k=200 (`results/tables/firms_instances.md`). Instance k=50 karena itu lebih longgar daripada yang dimaksud kalibrasi.
+
+**Kualitas (% best-known, `results/tables/scalability_combined.md`).**
+
+- SA bertahan di atas 96%: 99,79% (k=50), 98,58% (k=100), dan 96,86% (k=200). Hasil ini sejalan dengan 98,97% pada provinsi 2026 n=38.
+- Greedy turun perlahan: 87,84% → 81% → 76,96%.
+- HC turun paling tajam: 84,25% → 52,98% → 38,59%. Pada provinsi 2026 n=38, kualitas HC masih 94,93%.
+- GA turun dari 82,96% ke 62,05% dan 52,51%.
+- Runtime per run HC, SA, dan GA berada di kisaran puluhan detik, sedangkan Greedy di bawah 0,1 detik (`results/tables/firms_summary.md`).
+
+**Apakah peringkat provinsi tetap berlaku?** Tidak sepenuhnya (`results/tables/firms_ranking.md`). Acuannya adalah instance provinsi terbesar, 2026 n=38: SA > HC > Greedy > GA. Berikut hasil uji Wilcoxon-Holm (`results/tables/firms_wilcoxon_holm.md`):
+
+- **SA tetap pertama** di semua k, dan mengalahkan setiap algoritma lain di 30 dari 30 seed.
+- **HC turun di bawah Greedy** di semua k: Greedy menang di 26 dari 30 seed pada k=50 (p Holm 1.259e-06), dan 30 dari 30 pada k=100 dan k=200. Pada provinsi 2026 n=38, HC vs Greedy tidak signifikan.
+- **HC juga turun di bawah GA pada k ≥ 100**: GA menang di 27 dari 30 seed pada k=100 (p Holm 2.049e-07) dan 30 dari 30 pada k=200. Pada k=50, HC vs GA tidak signifikan (p Holm 0.4645).
+
+**Biaya per langkah Steepest-Ascent HC yang O(n²)** (`results/tables/firms_hc_cost.md`). Ukuran neighbourhood bertumbuh kuadratik terhadap jumlah node kandidat:
+
+<!-- AUTO:firms-hc-cost -->
+| instance | node kandidat | ukuran neighbourhood HC (evaluasi per langkah) | budget evaluasi | budget / neighbourhood (langkah penuh maks.) | restart HC rata-rata | langkah naik HC rata-rata |
+|:--|:--|:--|:--|:--|:--|:--|
+| provinsi 2026, n=38 | 37 | 2556 | 50000 | 19.6 | 1.33 | 18.7 |
+| FIRMS k=50 | 50 | 4753 | 100000 | 21.0 | 1.00 | 21.0 |
+| FIRMS k=100 | 100 | 19503 | 100000 | 5.1 | 1.00 | 5.0 |
+| FIRMS k=200 | 200 | 79003 | 100000 | 1.3 | 1.00 | 1.0 |
+<!-- /AUTO:firms-hc-cost -->
+
+- Pada k=200, satu langkah HC berisi 79.003 evaluasi. Budget 100.000 hanya cukup untuk 1,3 langkah penuh, dan HC rata-rata hanya naik 1 langkah dari permutasi awal.
+- Pada semua k, HC tidak pernah sempat restart. Pendakian pertama belum selesai saat budget habis di semua seed.
+- Sebaliknya, SA memakai satu evaluasi per langkah, sehingga budget yang sama memberi hampir 100.000 langkah. GA memakai satu evaluasi per anak dan menjalankan 1.019 generasi di setiap run (kolom `ga_generations` di `results/raw/firms_runs.csv`).
+
+**Hipotesis:** kekalahan HC pada FIRMS adalah efek budget terhadap ukuran neighbourhood, bukan efek local optimum. Varian first-improvement atau neighbourhood sampling kemungkinan mengubah peringkat ini. Varian tersebut tidak diuji, karena parameter algoritma tidak di-tuning (Bab 2.6).
+
+**Peta (Gambar 3.8).** Peta k=100 menampilkan hotspot VIIRS, 100 Klaster hotspot yang diwarnai menurut Risiko klaster, rute terbaik (SA) dari Depot Pekanbaru, dan Node dilewati.
 
 ## 3.6 Sensitivitas
 
@@ -170,8 +214,11 @@ Sumber: Gambar 3.6 `results/figures/best_route_map.png` dan `results/tables/case
 - **Instance kecil kurang diskriminatif.** Batas waktu misi tidak mengikat pada n=6 dan n=10. Optimum terbukti juga hanya tersedia untuk n=6.
 - **Parameter algoritma tidak di-tuning.** Peringkat berlaku untuk budget 20.000/50.000 dan parameter default. GA mungkin membaik dengan operator atau budget lain (hipotesis, subbab 3.5).
 - **Penyebab** kekalahan HC dan GA pada n=38 masih berupa hipotesis. Eksperimen ablasi operator atau budget belum dijalankan.
-- **Generalisasi ke instance lain**:
-
-<!-- FIRMS: isi setelah #6 -->
-
-_(Ringkas apakah temuan pada instance provinsi berlaku pada instance Klaster hotspot FIRMS.)_
+- **Generalisasi ke instance lain**: temuan provinsi hanya sebagian berlaku pada instance Klaster hotspot FIRMS (subbab 3.5.1).
+  - Yang berlaku: SA tetap terbaik dan paling stabil di semua k.
+  - Yang tidak berlaku: posisi HC. HC turun di bawah Greedy di semua k, dan di bawah GA pada k ≥ 100. Penyebab terukurnya adalah neighbourhood O(n²) yang melebihi budget evaluasi.
+  - Keterbatasan instance FIRMS sendiri:
+    - Batas waktu misi FIRMS adalah kandidat terdekat (72 jam, 39% pada k=100), bukan nilai dalam target 40–60%.
+    - Bounding box kasar memasukkan sekitar 260 hotspot di Malaysia.
+    - Risiko klaster dinormalisasi per instance, sehingga tidak sebanding dengan Risiko provinsi.
+    - Snapshot hanya mencakup satu minggu (2026-10-13 s.d. 2026-10-20).

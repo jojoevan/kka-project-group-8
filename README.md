@@ -31,13 +31,18 @@ Sumber setiap parameter ada di [`DATA_PROVENANCE.md`](DATA_PROVENANCE.md). Perub
 ```
 config.yaml                 parameter misi, Risiko, budget evaluasi, seed, sweep sensitivitas
 data/raw/                   data mentah (tidak pernah diubah)
-data/external/              koordinat ibu kota provinsi (ASSUMED)
+data/external/              koordinat ibu kota provinsi (ASSUMED), snapshot NASA FIRMS (firms/)
 data/processed/             fitur 38 provinsi hasil data prep
 src/data_prep.py            parsing data, Risiko global 38 provinsi, laporan kualitas data
 src/instance.py             Instance, jarak Haversine, decoder O(n) "lewati lalu lanjut"
 src/calibration.py          kalibrasi Batas waktu misi dengan Greedy
+src/config.py               config.yaml → fitur provinsi dan parameter misi (satu tempat)
+src/firms.py                hotspot FIRMS → instance Klaster hotspot (k-means, Risiko klaster)
 src/algorithms/             greedy, hill_climbing, simulated_annealing, genetic_algorithm, exact
 src/experiments/run_all.py  satu titik masuk semua eksperimen, tabel, dan gambar
+src/experiments/firms_phase.py  fase 2: eksperimen skalabilitas Klaster hotspot FIRMS (--firms)
+src/experiments/records.py  satu baris runs.csv per run (dipakai provinsi dan FIRMS)
+src/experiments/reporting.py  label kolom tabel berbahasa Indonesia + penulis tabel csv/md
 src/docs_gen.py             mengisi tabel/angka di dokumentasi dari config.yaml dan results/
 results/                    raw/, tables/, figures/, routes/, logs/ (hasil yang dipakai laporan)
 reports/                    data_quality.md, figures_index.md
@@ -69,8 +74,8 @@ python -m src.calibration
 # 3a. Mode cepat (smoke test): n ∈ {6, 10}, 3 seed, budget 300
 python -m src.experiments.run_all --quick --out /tmp/hasil_cepat
 
-# 3b. Eksperimen penuh: menulis ulang seluruh isi results/
-python -m src.experiments.run_all --config config.yaml [--workers K]
+# 3b. Eksperimen penuh: menulis ulang seluruh isi results/ (--firms: termasuk fase FIRMS)
+python -m src.experiments.run_all --config config.yaml --firms [--workers K]
 
 # 4. Perbarui tabel dan angka di dokumentasi dari results/ (atau --check untuk memeriksa saja)
 python -m src.docs_gen
@@ -81,12 +86,12 @@ python -m pytest
 
 Perkiraan runtime:
 
-- **Eksperimen penuh**: 1.202 run perbandingan utama ditambah 960 run sweep sensitivitas. Total 687.4 detik (±11,5 menit) dengan 12 worker (`results/logs/run_all.log`). Dengan lebih sedikit core, runtime naik kira-kira sebanding.
+- **Eksperimen penuh**: 1.202 run perbandingan utama, 960 run sweep sensitivitas, dan 360 run FIRMS (`--firms`). Total 1.231,7 detik (±20,5 menit) dengan 12 worker (`results/logs/run_all.log`). Dengan lebih sedikit core, runtime naik kira-kira sebanding.
 - **Mode cepat**: ±10 detik (diukur dengan 12 core saat dokumen ini ditulis).
 
 Setiap run hanya bergantung pada (instance, algoritma, seed), sehingga hasilnya identik untuk jumlah worker berapa pun.
 
-Catatan: eksperimen penuh juga menulis ulang `reports/figures_index.md` dengan versi lama tanpa penanda AUTO. Setelah eksperimen penuh, jalankan `python -m src.docs_gen` lalu periksa diff file tersebut.
+Eksperimen penuh ke `results/` otomatis memperbarui blok AUTO di dokumentasi (`python -m src.docs_gen`). Periksa diff dokumen setelahnya.
 
 ## Ringkasan hasil
 
@@ -157,11 +162,46 @@ Label **[Hipotesis]** menandai penjelasan yang belum diuji dengan eksperimen ter
 - **Batas waktu misi 72 jam tidak mengikat pada n=6 dan n=10** (`results/tables/instances.md`). Pada ukuran ini masalahnya mendekati TSP dengan Prize meluruh, sehingga perbedaan antar-algoritma kecil.
 - **Parameter algoritma ditetapkan sebelum eksperimen** dan tidak di-tuning. Peringkat algoritma berlaku untuk budget dan parameter ini saja. Hasil dengan budget atau tuning lain bisa berbeda.
 - **Best-known untuk n ≥ 10 bukan optimum terbukti.** Optimality gap terhadap Exact hanya tersedia untuk n=6.
-- **Generalisasi ke instance lain**:
+- **Generalisasi ke instance lain**: peringkat provinsi **tidak tetap berlaku sepenuhnya** pada instance Klaster hotspot FIRMS. Rinciannya ada di bagian berikut.
 
-<!-- FIRMS: isi setelah #6 -->
+## Instance Klaster hotspot FIRMS (fase 2)
 
-_(Pernyataan apakah peringkat algoritma pada instance provinsi tetap berlaku pada instance Klaster hotspot FIRMS k ∈ {50, 100, 200}, beserta tabel ringkasan dan grafik skalabilitas gabungan.)_
+Instance besar dibangun dari snapshot hotspot NASA FIRMS VIIRS 7 hari (diunduh 2026-10-20, `data/external/firms/`), sesuai ADR-0001. Hotspot difilter (confidence nominal/high, bounding box Sumatra + Kalimantan), lalu diklaster dengan k-means menjadi k ∈ {50, 100, 200} Klaster hotspot. **Risiko klaster** = Σ FRP → log1p → min-max antar-klaster dalam satu instance (lihat `GLOSSARY.md`). Decay-nya konstan g0, Depot tetap Pekanbaru, budget evaluasi 100.000, dan 30 seed per (algoritma, k). Parameter lengkap ada di `DATA_PROVENANCE.md`.
+
+Jalankan dengan `python -m src.experiments.run_all --firms` (provinsi + FIRMS) atau `--firms-only` (hanya FIRMS, membaca hasil provinsi dari `results/raw/runs.csv`).
+
+Fitness rata-rata 30 seed per k. Sumber: `results/tables/firms_summary.csv`, `results/tables/firms_instances.csv`; peringkat dari `results/tables/firms_ranking.md`.
+
+<!-- AUTO:firms-summary -->
+| k | Batas waktu misi (jam) | klaster terkunjungi Greedy | best-known | Greedy rata-rata | HC rata-rata | SA rata-rata | GA rata-rata | peringkat (= berarti seri) |
+|:--|:--|:--|:--|:--|:--|:--|:--|:--|
+| 50 | 72 | 36 (72%) | 22.436 | 19.707 | 18.903 | **22.388** | 18.614 | SA > Greedy > HC > GA |
+| 100 | 72 | 39 (39%) | 24.618 | 19.940 | 13.042 | **24.269** | 15.276 | SA > Greedy > GA > HC |
+| 200 | 72 | 45 (22%) | 27.204 | 20.936 | 10.497 | **26.350** | 14.286 | SA > Greedy > GA > HC |
+<!-- /AUTO:firms-summary -->
+
+Catatan jujur tentang instance ini:
+
+- **Kalibrasi Batas waktu misi FIRMS jatuh ke nilai cadangan.** Pada k=100, tidak ada kandidat yang membuat Greedy mengunjungi 40–60% klaster: 72 jam menghasilkan 39% dan 120 jam 73%. Kalibrasi memilih kandidat terdekat, 72 jam (`results/tables/firms_calibration.md`). Batas yang sama dipakai untuk semua k, sehingga fraksi terkunjungi Greedy adalah 72% pada k=50 dan 22,5% pada k=200 (`results/tables/firms_instances.md`).
+- **Bounding box adalah kotak kasar pulau.** Sekitar 260 hotspot di Malaysia (±60 di Semenanjung Malaysia, ±200 di Sarawak/Sabah) ikut masuk kotak (`data/external/firms/SUOMI_VIIRS_C2_SouthEast_Asia_7d_2026-10-20.source.txt`), dari 28.983 hotspot setelah filter (`results/tables/firms_instances.md`).
+- **[Data] Peringkat provinsi tidak tetap berlaku sepenuhnya** (`results/tables/firms_ranking.md`, `results/tables/firms_wilcoxon_holm.md`). Acuannya adalah instance provinsi terbesar (2026, n=38): SA > HC > Greedy > GA.
+  - SA tetap pertama di semua k, dan mengalahkan setiap algoritma lain di 30 dari 30 seed.
+  - HC turun di bawah Greedy di semua k. Pada k=50, Greedy menang di 26 dari 30 seed (p Holm 1.259e-06). Pada k=100 dan k=200, Greedy menang di 30 dari 30 seed.
+  - Pada k ≥ 100, HC juga turun di bawah GA: GA menang di 27 dari 30 seed pada k=100 (p Holm 2.049e-07) dan 30 dari 30 pada k=200. Pada k=50, HC vs GA tidak berbeda signifikan (p Holm 0.4645).
+- **[Data] Biaya per langkah Steepest-Ascent HC yang O(n²)** menjelaskan kekalahan HC (`results/tables/firms_hc_cost.md`). Satu langkah HC mengevaluasi seluruh neighbourhood. Ukurannya 4.753 tetangga pada k=50, 19.503 pada k=100, dan 79.003 pada k=200, sehingga budget 100.000 hanya cukup untuk 21, 5,1, dan 1,3 langkah penuh. HC tidak pernah sempat restart (restart rata-rata 1 di semua k), dan langkah naik rata-ratanya 21, 5, dan 1. Pada k=200, HC praktis hanya menyelesaikan satu langkah dari permutasi awal acak.
+
+<!-- AUTO:firms-hc-cost -->
+| instance | node kandidat | ukuran neighbourhood HC (evaluasi per langkah) | budget evaluasi | budget / neighbourhood (langkah penuh maks.) | restart HC rata-rata | langkah naik HC rata-rata |
+|:--|:--|:--|:--|:--|:--|:--|
+| provinsi 2026, n=38 | 37 | 2556 | 50000 | 19.6 | 1.33 | 18.7 |
+| FIRMS k=50 | 50 | 4753 | 100000 | 21.0 | 1.00 | 21.0 |
+| FIRMS k=100 | 100 | 19503 | 100000 | 5.1 | 1.00 | 5.0 |
+| FIRMS k=200 | 200 | 79003 | 100000 | 1.3 | 1.00 | 1.0 |
+<!-- /AUTO:firms-hc-cost -->
+
+- **[Hipotesis]** HC kalah dari Greedy dan GA pada FIRMS bukan karena terjebak di local optimum, tetapi karena budget habis jauh sebelum pendakian pertama selesai. Varian first-improvement atau neighbourhood sampling kemungkinan mengubah peringkat ini, tetapi tidak diuji karena parameter algoritma tidak di-tuning.
+
+Grafik: `results/figures/scalability_combined.png` (skalabilitas gabungan provinsi + FIRMS), `results/figures/firms_cluster_map_k100.png` (peta klaster dan rute terbaik k=100), dan `results/figures/firms_boxplot_fitness.png`.
 
 ## Dokumen lain
 

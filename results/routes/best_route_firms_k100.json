@@ -1,0 +1,607 @@
+{
+  "instance": "FIRMS",
+  "k": 100,
+  "algorithm": "SA",
+  "seed": 4,
+  "time_limit_h": 72.0,
+  "route": [
+    {
+      "index": 32,
+      "province": "Klaster 32",
+      "arrival_h": 2.090693478625054,
+      "prize": 0.6591381812342646,
+      "risk": 0.6730638040110593
+    },
+    {
+      "index": 13,
+      "province": "Klaster 13",
+      "arrival_h": 3.2113944375400005,
+      "prize": 0.7296477199241038,
+      "risk": 0.75345989115327
+    },
+    {
+      "index": 11,
+      "province": "Klaster 11",
+      "arrival_h": 4.417220558856926,
+      "prize": 0.7390546580703073,
+      "risk": 0.7724320826505175
+    },
+    {
+      "index": 14,
+      "province": "Klaster 14",
+      "arrival_h": 5.8295434989376655,
+      "prize": 0.7106856017239958,
+      "risk": 0.7533467214894635
+    },
+    {
+      "index": 40,
+      "province": "Klaster 40",
+      "arrival_h": 7.322967392076271,
+      "prize": 0.6072552618647069,
+      "risk": 0.653393079008296
+    },
+    {
+      "index": 25,
+      "province": "Klaster 25",
+      "arrival_h": 8.76433056914118,
+      "prize": 0.6390514156894231,
+      "risk": 0.6975876853584387
+    },
+    {
+      "index": 2,
+      "province": "Klaster 2",
+      "arrival_h": 10.018796351201784,
+      "prize": 0.8866053378340314,
+      "risk": 0.9800346286241363
+    },
+    {
+      "index": 52,
+      "province": "Klaster 52",
+      "arrival_h": 11.164137045835021,
+      "prize": 0.5548903755223152,
+      "risk": 0.6204294770278111
+    },
+    {
+      "index": 12,
+      "province": "Klaster 12",
+      "arrival_h": 12.444234249622571,
+      "prize": 0.6786857365504678,
+      "risk": 0.7686229446019243
+    },
+    {
+      "index": 23,
+      "province": "Klaster 23",
+      "arrival_h": 16.416531298179233,
+      "prize": 0.6038773147645683,
+      "risk": 0.7116145262114818
+    },
+    {
+      "index": 1,
+      "province": "Klaster 1",
+      "arrival_h": 17.68491120220024,
+      "prize": 0.8379062049581099,
+      "risk": 1.0
+    },
+    {
+      "index": 21,
+      "province": "Klaster 21",
+      "arrival_h": 19.214416882537453,
+      "prize": 0.5947727217146097,
+      "risk": 0.7207724766277379
+    },
+    {
+      "index": 17,
+      "province": "Klaster 17",
+      "arrival_h": 20.438954872999094,
+      "prize": 0.6007351731363425,
+      "risk": 0.7369674623628142
+    },
+    {
+      "index": 19,
+      "province": "Klaster 19",
+      "arrival_h": 21.6083163782953,
+      "prize": 0.5871586107927392,
+      "risk": 0.7287845546659765
+    },
+    {
+      "index": 3,
+      "province": "Klaster 3",
+      "arrival_h": 22.899201187966256,
+      "prize": 0.7608739825684481,
+      "risk": 0.9566712026369365
+    },
+    {
+      "index": 5,
+      "province": "Klaster 5",
+      "arrival_h": 24.095311250249416,
+      "prize": 0.6881868483798366,
+      "risk": 0.8756911808551676
+    },
+    {
+      "index": 22,
+      "province": "Klaster 22",
+      "arrival_h": 25.305094024626563,
+      "prize": 0.5587165148480053,
+      "risk": 0.7195983115456459
+    },
+    {
+      "index": 4,
+      "province": "Klaster 4",
+      "arrival_h": 26.534494127315718,
+      "prize": 0.7057431914308717,
+      "risk": 0.9202048985662007
+    },
+    {
+      "index": 8,
+      "province": "Klaster 8",
+      "arrival_h": 27.81487534614036,
+      "prize": 0.6074333188502595,
+      "risk": 0.8022266383807366
+    },
+    {
+      "index": 7,
+      "province": "Klaster 7",
+      "arrival_h": 29.029613503141892,
+      "prize": 0.6058883420567498,
+      "risk": 0.8099656586927542
+    },
+    {
+      "index": 20,
+      "province": "Klaster 20",
+      "arrival_h": 30.22800735561872,
+      "prize": 0.5335214874199188,
+      "risk": 0.7218226126189335
+    },
+    {
+      "index": 45,
+      "province": "Klaster 45",
+      "arrival_h": 31.57755005053861,
+      "prize": 0.47217988347487816,
+      "risk": 0.6475108320990574
+    },
+    {
+      "index": 24,
+      "province": "Klaster 24",
+      "arrival_h": 32.775705069810826,
+      "prize": 0.5124186791977334,
+      "risk": 0.7111611625598061
+    },
+    {
+      "index": 16,
+      "province": "Klaster 16",
+      "arrival_h": 33.89956966317813,
+      "prize": 0.529008751969647,
+      "risk": 0.7424835181994375
+    },
+    {
+      "index": 6,
+      "province": "Klaster 6",
+      "arrival_h": 35.08407646820249,
+      "prize": 0.5819939654739014,
+      "risk": 0.8265834199594124
+    },
+    {
+      "index": 30,
+      "province": "Klaster 30",
+      "arrival_h": 36.285783024731494,
+      "prize": 0.4693587206150428,
+      "risk": 0.6746710029754963
+    },
+    {
+      "index": 44,
+      "province": "Klaster 44",
+      "arrival_h": 37.50394697084108,
+      "prize": 0.44567550627632196,
+      "risk": 0.6484796301344675
+    },
+    {
+      "index": 42,
+      "province": "Klaster 42",
+      "arrival_h": 38.784106446460214,
+      "prize": 0.4414743064295898,
+      "risk": 0.6506428581859278
+    },
+    {
+      "index": 41,
+      "province": "Klaster 41",
+      "arrival_h": 40.0634977650907,
+      "prize": 0.4371936909371096,
+      "risk": 0.6526306201096059
+    },
+    {
+      "index": 50,
+      "province": "Klaster 50",
+      "arrival_h": 41.39269659322485,
+      "prize": 0.41192455849282333,
+      "risk": 0.6231374921268166
+    },
+    {
+      "index": 49,
+      "province": "Klaster 49",
+      "arrival_h": 42.59582476903446,
+      "prize": 0.4123121288531353,
+      "risk": 0.6312733086575487
+    },
+    {
+      "index": 48,
+      "province": "Klaster 48",
+      "arrival_h": 43.92117807361681,
+      "prize": 0.40778294494181194,
+      "risk": 0.6326686439972664
+    },
+    {
+      "index": 34,
+      "province": "Klaster 34",
+      "arrival_h": 45.12395406223354,
+      "prize": 0.425351720578408,
+      "risk": 0.6679116772602576
+    },
+    {
+      "index": 51,
+      "province": "Klaster 51",
+      "arrival_h": 46.62437508032996,
+      "prize": 0.3898225759283152,
+      "risk": 0.6213754278052562
+    },
+    {
+      "index": 38,
+      "province": "Klaster 38",
+      "arrival_h": 47.89595102120742,
+      "prize": 0.40818121887449194,
+      "risk": 0.6589652158733676
+    },
+    {
+      "index": 15,
+      "province": "Klaster 15",
+      "arrival_h": 49.26752250433113,
+      "prize": 0.4581609938946685,
+      "risk": 0.7498670037289441
+    },
+    {
+      "index": 29,
+      "province": "Klaster 29",
+      "arrival_h": 50.93275512914727,
+      "prize": 0.41107160021268563,
+      "risk": 0.6840937436681451
+    },
+    {
+      "index": 10,
+      "province": "Klaster 10",
+      "arrival_h": 52.38725770845198,
+      "prize": 0.45793335311912864,
+      "risk": 0.7732452227507798
+    },
+    {
+      "index": 37,
+      "province": "Klaster 37",
+      "arrival_h": 53.73743430216962,
+      "prize": 0.38704646576263857,
+      "risk": 0.662432784539381
+    },
+    {
+      "index": 26,
+      "province": "Klaster 26",
+      "arrival_h": 55.393672557053954,
+      "prize": 0.4005799143483512,
+      "risk": 0.6970450261654859
+    },
+    {
+      "index": 18,
+      "province": "Klaster 18",
+      "arrival_h": 56.79984863842686,
+      "prize": 0.41495177652025705,
+      "risk": 0.732278421370249
+    },
+    {
+      "index": 35,
+      "province": "Klaster 35",
+      "arrival_h": 58.560936629798604,
+      "prize": 0.3711286167273621,
+      "risk": 0.6665785883310341
+    },
+    {
+      "index": 9,
+      "province": "Klaster 9",
+      "arrival_h": 60.15650985784925,
+      "prize": 0.4281401635813224,
+      "risk": 0.7813441654411156
+    },
+    {
+      "index": 27,
+      "province": "Klaster 27",
+      "arrival_h": 64.5150345366851,
+      "prize": 0.3626606682918785,
+      "risk": 0.6913304603101466
+    },
+    {
+      "index": 28,
+      "province": "Klaster 28",
+      "arrival_h": 66.67951418912662,
+      "prize": 0.3512369136373063,
+      "risk": 0.6842039907812966
+    },
+    {
+      "index": 31,
+      "province": "Klaster 31",
+      "arrival_h": 68.23289132527172,
+      "prize": 0.34046915612889567,
+      "risk": 0.6736114430490157
+    }
+  ],
+  "fitness": 24.617886273601776,
+  "distance_km": 5099.11083502637,
+  "mission_time_h": 71.49555417513184,
+  "remaining_time_h": 0.5044458248681565,
+  "skipped": [
+    {
+      "index": 33,
+      "province": "Klaster 33",
+      "risk": 0.6691318059909597
+    },
+    {
+      "index": 36,
+      "province": "Klaster 36",
+      "risk": 0.664940851372659
+    },
+    {
+      "index": 39,
+      "province": "Klaster 39",
+      "risk": 0.6583891960369042
+    },
+    {
+      "index": 43,
+      "province": "Klaster 43",
+      "risk": 0.6501778853312732
+    },
+    {
+      "index": 46,
+      "province": "Klaster 46",
+      "risk": 0.6472906350523668
+    },
+    {
+      "index": 47,
+      "province": "Klaster 47",
+      "risk": 0.6395186289236726
+    },
+    {
+      "index": 53,
+      "province": "Klaster 53",
+      "risk": 0.6197476442642941
+    },
+    {
+      "index": 54,
+      "province": "Klaster 54",
+      "risk": 0.6194812051019636
+    },
+    {
+      "index": 55,
+      "province": "Klaster 55",
+      "risk": 0.6163164112386988
+    },
+    {
+      "index": 56,
+      "province": "Klaster 56",
+      "risk": 0.6146584680716428
+    },
+    {
+      "index": 57,
+      "province": "Klaster 57",
+      "risk": 0.6137445255809543
+    },
+    {
+      "index": 58,
+      "province": "Klaster 58",
+      "risk": 0.613131759835016
+    },
+    {
+      "index": 59,
+      "province": "Klaster 59",
+      "risk": 0.6118206126173491
+    },
+    {
+      "index": 60,
+      "province": "Klaster 60",
+      "risk": 0.5975129322169196
+    },
+    {
+      "index": 61,
+      "province": "Klaster 61",
+      "risk": 0.5907950257999401
+    },
+    {
+      "index": 62,
+      "province": "Klaster 62",
+      "risk": 0.588882748552111
+    },
+    {
+      "index": 63,
+      "province": "Klaster 63",
+      "risk": 0.5758212484410645
+    },
+    {
+      "index": 64,
+      "province": "Klaster 64",
+      "risk": 0.5753030711242507
+    },
+    {
+      "index": 65,
+      "province": "Klaster 65",
+      "risk": 0.5750075970827
+    },
+    {
+      "index": 66,
+      "province": "Klaster 66",
+      "risk": 0.5727246920879439
+    },
+    {
+      "index": 67,
+      "province": "Klaster 67",
+      "risk": 0.5664701671129417
+    },
+    {
+      "index": 68,
+      "province": "Klaster 68",
+      "risk": 0.5654001286144251
+    },
+    {
+      "index": 69,
+      "province": "Klaster 69",
+      "risk": 0.5639139419099063
+    },
+    {
+      "index": 70,
+      "province": "Klaster 70",
+      "risk": 0.5593227599594599
+    },
+    {
+      "index": 71,
+      "province": "Klaster 71",
+      "risk": 0.5565027267995517
+    },
+    {
+      "index": 72,
+      "province": "Klaster 72",
+      "risk": 0.5554132441958334
+    },
+    {
+      "index": 73,
+      "province": "Klaster 73",
+      "risk": 0.5544393901202977
+    },
+    {
+      "index": 74,
+      "province": "Klaster 74",
+      "risk": 0.5441793653681991
+    },
+    {
+      "index": 75,
+      "province": "Klaster 75",
+      "risk": 0.539164891114007
+    },
+    {
+      "index": 76,
+      "province": "Klaster 76",
+      "risk": 0.5310007842033295
+    },
+    {
+      "index": 77,
+      "province": "Klaster 77",
+      "risk": 0.5289566788346448
+    },
+    {
+      "index": 78,
+      "province": "Klaster 78",
+      "risk": 0.4996454518553467
+    },
+    {
+      "index": 79,
+      "province": "Klaster 79",
+      "risk": 0.4821087432598117
+    },
+    {
+      "index": 80,
+      "province": "Klaster 80",
+      "risk": 0.4813708330546201
+    },
+    {
+      "index": 81,
+      "province": "Klaster 81",
+      "risk": 0.4797182249348968
+    },
+    {
+      "index": 82,
+      "province": "Klaster 82",
+      "risk": 0.46189192094070824
+    },
+    {
+      "index": 83,
+      "province": "Klaster 83",
+      "risk": 0.4524598767433339
+    },
+    {
+      "index": 84,
+      "province": "Klaster 84",
+      "risk": 0.4080889360001206
+    },
+    {
+      "index": 85,
+      "province": "Klaster 85",
+      "risk": 0.3821013249953049
+    },
+    {
+      "index": 86,
+      "province": "Klaster 86",
+      "risk": 0.36667741769424284
+    },
+    {
+      "index": 87,
+      "province": "Klaster 87",
+      "risk": 0.36196967344510467
+    },
+    {
+      "index": 88,
+      "province": "Klaster 88",
+      "risk": 0.3514742849561287
+    },
+    {
+      "index": 89,
+      "province": "Klaster 89",
+      "risk": 0.2981967622666612
+    },
+    {
+      "index": 90,
+      "province": "Klaster 90",
+      "risk": 0.284811244314688
+    },
+    {
+      "index": 91,
+      "province": "Klaster 91",
+      "risk": 0.21708791338780353
+    },
+    {
+      "index": 92,
+      "province": "Klaster 92",
+      "risk": 0.2134213240998761
+    },
+    {
+      "index": 93,
+      "province": "Klaster 93",
+      "risk": 0.1865530273666534
+    },
+    {
+      "index": 94,
+      "province": "Klaster 94",
+      "risk": 0.16784132083713105
+    },
+    {
+      "index": 95,
+      "province": "Klaster 95",
+      "risk": 0.16440408605272375
+    },
+    {
+      "index": 96,
+      "province": "Klaster 96",
+      "risk": 0.1580576977764424
+    },
+    {
+      "index": 97,
+      "province": "Klaster 97",
+      "risk": 0.15318243731329934
+    },
+    {
+      "index": 98,
+      "province": "Klaster 98",
+      "risk": 0.11733668480440394
+    },
+    {
+      "index": 99,
+      "province": "Klaster 99",
+      "risk": 0.01599449470519027
+    },
+    {
+      "index": 100,
+      "province": "Klaster 100",
+      "risk": 0.0
+    }
+  ]
+}

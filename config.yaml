@@ -25,3 +25,15 @@ quick:  # mode cepat (--quick) untuk smoke test
   seeds: 3
   budget: 300
   sensitivity_n: 10  # menggantikan analysis.sensitivity.n dan analysis.case_study.n
+firms:  # fase 2: Klaster hotspot NASA FIRMS (#6, ADR-0001); ditetapkan sebelum melihat hasil
+  snapshot: data/external/firms/SUOMI_VIIRS_C2_SouthEast_Asia_7d_2026-10-20.csv  # relatif ke root repo
+  confidence: [nominal, high]
+  bboxes:  # [lat_min, lat_max, lon_min, lon_max]; ASSUMED, kotak kasar pulau
+    Sumatra: [-6.0, 6.0, 95.0, 106.0]
+    Kalimantan: [-4.5, 4.5, 108.5, 119.0]
+  sizes: [50, 100, 200]  # k Klaster hotspot (instance = k node + Depot)
+  kmeans_seed: 0
+  budget: 100000
+  calibration_k: 100  # Batas waktu misi dikalibrasi sekali (greedy, utilitas yang sama) lalu dipakai semua k
+  map_k: 100
+  quick: {sizes: [3, 6], seeds: 2, budget: 300}

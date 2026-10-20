@@ -1,0 +1,11 @@
+Sumber   : NASA FIRMS, feed teks publik active fire (tanpa API key)
+URL      : https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_SouthEast_Asia_7d.csv
+Sensor   : VIIRS 375 m, Suomi NPP (collection 2, NRT), wilayah South-East Asia, 7 hari terakhir
+Diunduh  : 2026-10-20 06:30 UTC
+Isi      : 72.305 baris, acq_date 2026-10-13 s.d. 2026-10-20
+SHA-256  : 355304e2733b25593beb3602991ca9d660fe8b7fc49d955550d773e89c5eec1b
+Catatan  : File disimpan apa adanya (tidak diubah). Pipeline hanya membaca file ini (config.yaml firms.snapshot),
+           tidak pernah feed langsung, karena feed 7 hari terus bergeser. Diperlakukan sebagai data tak tepercaya:
+           hanya diparsing (kolom latitude, longitude, confidence, frp).
+           Bounding box Sumatra/Kalimantan di config.yaml adalah kotak kasar (ASSUMED); sebagian kecil hotspot
+           di Semenanjung Malaysia (~60) dan Sarawak/Sabah (~200) ikut masuk kotak.

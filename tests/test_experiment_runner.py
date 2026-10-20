@@ -259,3 +259,69 @@ def test_case_study_route_table_and_map(out, quick, cfg):
     md = (out / "tables" / "case_study_route.md").read_text(encoding="utf8")
     assert "Depot" in md and "dilewati" in md
     assert _dpi(out / "figures" / "best_route_map.png") == 300
+
+
+# --- Ticket #6: Klaster hotspot FIRMS --------------------------------------------------------------
+
+FIRMS_FIXTURE = ROOT / "tests" / "fixtures" / "firms_small.csv"
+
+
+def _firms_config(tmp_path, cfg, snapshot):
+    import yaml
+    c = {**cfg, "firms": {**cfg["firms"], "snapshot": str(snapshot)}}
+    path = tmp_path / "config.yaml"; path.write_text(yaml.safe_dump(c, allow_unicode=True), encoding="utf8")
+    return path
+
+
+def test_firms_flag_skips_cleanly_when_snapshot_is_missing(tmp_path, cfg):
+    config = _firms_config(tmp_path, cfg, tmp_path / "tidak_ada.csv")
+    main(["--config", str(config), "--quick", "--out", str(tmp_path / "o"), "--workers", "1", "--firms-only"])
+    assert not (tmp_path / "o" / "raw" / "firms_runs.csv").exists()
+    assert "dilewati" in (tmp_path / "o" / "logs" / "firms.log").read_text(encoding="utf8")
+
+
+@pytest.fixture(scope="module")
+def firms_out(out, cfg, tmp_path_factory):
+    import shutil
+    d = tmp_path_factory.mktemp("firms")
+    (d / "raw").mkdir(); shutil.copy(out / "raw" / "runs.csv", d / "raw" / "runs.csv")  # province results
+    config = _firms_config(d, cfg, FIRMS_FIXTURE)
+    main(["--config", str(config), "--quick", "--out", str(d), "--workers", "2", "--firms-only"])
+    return d
+
+
+def test_firms_runs_every_k_seed_and_heuristic(firms_out, cfg):
+    q = cfg["firms"]["quick"]
+    runs = pd.read_csv(firms_out / "raw" / "firms_runs.csv")
+    assert len(runs) == len(q["sizes"]) * q["seeds"] * len(HEURISTICS)
+    assert set(runs.k) == set(q["sizes"]) and (runs.n == runs.k + 1).all()
+    assert set(runs.algorithm) == set(HEURISTICS) and (runs.evals <= q["budget"]).all()
+    assert (runs.mission_time_h <= runs.time_limit_h + 1e-9).all()
+    inst = pd.read_csv(firms_out / "tables" / "firms_instances.csv")
+    assert set(inst.k) == set(q["sizes"]) and inst.time_limit_h.nunique() == 1
+    assert {"hotspots", "time_limit_h", "greedy_visited"} <= set(inst.columns)
+    for name in ("firms_summary", "firms_wilcoxon_holm", "firms_hc_cost", "firms_ranking"):
+        assert (firms_out / "tables" / f"{name}.md").exists()
+    hc = pd.read_csv(firms_out / "tables" / "firms_hc_cost.csv")
+    assert (hc.neighbourhood_size > 0).all() and {"provinsi", "FIRMS"} <= set(hc.instance_family)
+    f = hc[hc.instance_family == "FIRMS"]
+    assert sorted(f.n) == sorted(k + 1 for k in q["sizes"])
+    # neighbourhood of k nodes: k(k-1)/2 swaps + 3 moves for each of the (k-1)(k-2)/2 pairs >= 2 apart
+    assert f.set_index("n").loc[7, "neighbourhood_size"] == 15 + 3 * 10
+
+
+def test_firms_ranking_states_whether_province_ranking_holds(firms_out):
+    md = (firms_out / "tables" / "firms_ranking.md").read_text(encoding="utf8")
+    assert "provinsi" in md and "FIRMS" in md and "tetap berlaku" in md
+
+
+def test_combined_scalability_and_cluster_map(firms_out, cfg):
+    s = pd.read_csv(firms_out / "tables" / "scalability_combined.csv")
+    assert {"provinsi", "FIRMS"} <= set(s.instance_family)
+    assert _dpi(firms_out / "figures" / "scalability_combined.png") == 300
+    k = max(cfg["firms"]["quick"]["sizes"])
+    assert _dpi(firms_out / "figures" / f"firms_cluster_map_k{k}.png") == 300
+    best = json.loads((firms_out / "routes" / f"best_route_firms_k{k}.json").read_text(encoding="utf8"))
+    assert best["k"] == k and len(best["route"]) + len(best["skipped"]) == k
+    nodes = pd.read_csv(firms_out / "tables" / f"firms_clusters_k{k}.csv")
+    assert len(nodes) == k and nodes.risk.between(0, 1).all()

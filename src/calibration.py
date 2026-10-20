@@ -45,20 +45,15 @@ def write_time_limit(config_path, value):
 
 
 def main():
-    import yaml
-    from src.data_prep import ROOT, prepare
-    from src.instance import build_instance
+    from src.config import load_config, province_coords, province_features, province_instance
+    from src.data_prep import ROOT
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--config", default=str(ROOT / "config.yaml"))
     ap.add_argument("--write", action="store_true", help="catat nilai terpilih di config.yaml")
     args = ap.parse_args()
-    cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf8")); w = cfg["weights"]
-    features = prepare(weights=(w["hist"], w["cur"], w["ops"]), gamma=cfg["gamma"])[0]
-    coords = pd.read_csv(ROOT / "data" / "external" / "province_coords.csv")
-    inst = build_instance(features, coords, n=38, scenario="2026", depot_name=cfg["depot"],
-                          speed=cfg["speed_kmh"], detour=cfg["detour_factor"], dwell=cfg["dwell_hours"],
-                          g0=cfg["decay_g0"], kappa=cfg["decay_kappa"])
-    out = calibrate_time_limit(inst)
+    cfg = load_config(args.config)
+    inst = province_instance(cfg, province_features(cfg), province_coords(), n=38, scenario="2026")
+    out = calibrate_time_limit(inst)  # the configured time limit is replaced by each candidate
     print(out["table"].rename(columns={"time_limit_h": "batas_waktu_jam", "visited": "terkunjungi",
                                        "visited_fraction": "fraksi_terkunjungi"}).to_string(index=False))
     status = "dalam target" if out["in_target"] else "TIDAK ada kandidat dalam target; dipilih yang terdekat"

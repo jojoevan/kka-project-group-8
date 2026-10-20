@@ -167,7 +167,7 @@ def scalability_combined(table, algorithms, path, province_scenario="2026"):
 
 
 def firms_cluster_map(hotspots, nodes, depot, inst, route_detail, bboxes, title, path):
-    """Hotspots (grey), Klaster hotspot nodes coloured by Risiko, the best route (numbered, arrows),
+    """Hotspots (grey), Klaster hotspot nodes coloured by Risiko klaster, the best route (numbered, arrows),
     Node dilewati (hollow) and the Depot, in lon/lat."""
     from matplotlib.patches import Rectangle
     fig, ax = plt.subplots(figsize=(13, 7.5))

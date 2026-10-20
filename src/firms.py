@@ -56,7 +56,7 @@ def kmeans(X, k, seed=0, max_iter=300):
 
 
 def _risk_from_frp(frp_sum):
-    """Σ FRP -> log1p -> min-max over the clusters (all equal -> 1)."""
+    """Risiko klaster (GLOSSARY.md): Σ FRP -> log1p -> min-max over the clusters (all equal -> 1)."""
     v = np.log1p(np.asarray(frp_sum, float)); span = v.max() - v.min()
     return (v - v.min()) / span if span > 0 else np.ones_like(v)
 
@@ -68,8 +68,8 @@ def build_firms_instance(hotspots, k, depot, seed=0, speed=200., detour=1.15, dw
 
     Hotspots are clustered with k-means on (lat, lon * cos lat). A node sits at its cluster centre,
     or at the member hotspot closest to it if the centre falls outside the member's bounding boxes
-    (a cluster spanning two regions). Risiko = Σ FRP -> log1p -> min-max over the clusters. Clusters
-    have no operational data, so decay is constant (ops = 0, g = g0). Nodes are numbered by Risiko,
+    (a cluster spanning two regions). Risiko klaster = Σ FRP -> log1p -> min-max over the clusters. Clusters
+    have no operational data, so decay is constant (ops = 0, g = g0). Nodes are numbered by Risiko klaster,
     highest first. depot is {name, lat, lon}."""
     h = hotspots.reset_index(drop=True)
     X = np.c_[h.lat, h.lon * np.cos(np.radians(h.lat))]

@@ -26,18 +26,21 @@ import time
 from multiprocessing import Pool
 from pathlib import Path
 import pandas as pd
-import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from src.algorithms import SOLVERS
 from src.algorithms.exact import MAX_NODES as EXACT_MAX_NODES
-from src.data_prep import SCENARIOS, prepare
+from src.config import load_config, province_coords, province_features, province_instance
+from src.data_prep import SCENARIOS
 from src.experiments import analysis, firms_phase, plots
 from src.experiments.records import HEURISTICS, run_record
-from src.experiments.stats import (convergence_table, evals_to_fraction, optimality_gap_table,
+from src.experiments.reporting import (ABLATION_ORDER_ID, ABLATION_ROUTES_ID, ABLATION_SEEDS_ID, CASE_STUDY_ID,
+                                       GAP_ID, INSTANCES_ID, SCALABILITY_ID, SENSITIVITY_ID, SUMMARY_ID,
+                                       WILCOXON_ID, write_table)
+from src.experiments.stats import (convergence_table, optimality_gap_table,
                                    scalability_table, sensitivity_table, summary_table, wilcoxon_holm_table)
-from src.instance import INSTANCE_SIZES, build_instance
+from src.instance import INSTANCE_SIZES
 
 EXACT_BUDGET = 10**7
 log = logging.getLogger("run_all")
@@ -51,17 +54,9 @@ def _init(features, coords, cfg):
     _features, _coords, _cfg = features, coords, cfg; _instances.clear()
 
 
-def make_instance(features, coords, cfg, n, scenario, overrides=()):
-    """Instance from the config; overrides are (config key, value) pairs, e.g. (("decay_g0", 0.),)."""
-    c = {**cfg, **dict(overrides)}
-    return build_instance(features, coords, n=n, scenario=scenario, depot_name=c["depot"],
-                          speed=c["speed_kmh"], detour=c["detour_factor"], dwell=c["dwell_hours"],
-                          time_limit=c["time_limit_hours"], g0=c["decay_g0"], kappa=c["decay_kappa"])
-
-
 def _instance(n, scenario, overrides=()):
     if (n, scenario, overrides) not in _instances:
-        _instances[n, scenario, overrides] = make_instance(_features, _coords, _cfg, n, scenario, overrides)
+        _instances[n, scenario, overrides] = province_instance(_cfg, _features, _coords, n, scenario, overrides)
     return _instances[n, scenario, overrides]
 
 
@@ -111,57 +106,6 @@ def plan_sensitivity(cfg, quick):
             for p in SENSITIVITY_PARAMS for v in sens[p] for s in range(seeds) for a in HEURISTICS]
 
 
-def write_table(df, path_stem, rename=None, floatfmt=".4g"):
-    df.to_csv(path_stem.with_suffix(".csv"), index=False)
-    shown = df.rename(columns=rename or {})
-    path_stem.with_suffix(".md").write_text(shown.to_markdown(index=False, floatfmt=floatfmt) + "\n", encoding="utf8")
-
-
-SUMMARY_ID = {"scenario": "skenario", "algorithm": "algoritma", "runs": "jumlah run", "best": "terbaik",
-              "mean": "rata-rata", "std": "simpangan baku", "median": "median",
-              "runtime_mean_s": "runtime rata-rata (s)", "evals_mean": "evaluasi rata-rata",
-              "evals_to_95_mean": "evaluasi ke 95% rata-rata", "success_rate": "success rate (1%)",
-              "best_known": "best-known"}
-GAP_ID = {"scenario": "skenario", "algorithm": "algoritma", "exact": "optimum Exact",
-          "mean_fitness": "fitness rata-rata", "gap_mean_pct": "gap rata-rata (%)", "gap_max_pct": "gap maks (%)",
-          "optimal_rate": "proporsi optimal"}
-INSTANCES_ID = {"scenario": "skenario", "budget": "budget evaluasi", "time_limit_h": "Batas waktu misi (jam)",
-                "greedy_visited": "terkunjungi Greedy", "candidates": "node kandidat",
-                "time_limit_binds": "batas waktu mengikat", "greedy_mission_time_h": "waktu misi Greedy (jam)"}
-WILCOXON_ID = {"scenario": "skenario", "algorithm_a": "algoritma A", "algorithm_b": "algoritma B",
-               "median_a": "median A", "median_b": "median B", "median_diff": "median selisih (A-B)",
-               "wins_a": "A menang", "wins_b": "B menang", "statistic": "statistik W",
-               "p_value": "p-value", "p_holm": "p-value Holm", "significant_0.05": "signifikan (0,05)"}
-SCALABILITY_ID = {"scenario": "skenario", "algorithm": "algoritma", "runtime_mean_s": "runtime rata-rata (s)",
-                  "runtime_std_s": "runtime simpangan baku (s)", "quality_mean_pct": "kualitas rata-rata (% best-known)",
-                  "quality_std_pct": "kualitas simpangan baku (%)", "visited_mean": "node dikunjungi rata-rata"}
-SENSITIVITY_ID = {"parameter": "parameter", "value": "nilai", "scenario": "skenario", "algorithm": "algoritma",
-                  "runs": "jumlah run", "best": "terbaik", "mean": "rata-rata", "std": "simpangan baku",
-                  "median": "median", "visited_mean": "node dikunjungi rata-rata",
-                  "mission_time_mean_h": "waktu misi rata-rata (jam)", "runtime_mean_s": "runtime rata-rata (s)",
-                  "quality_mean_pct": "kualitas rata-rata (% terbaik setting)"}
-ABLATION_ROUTES_ID = {"variant": "varian rute", "algorithm": "algoritma",
-                      "fitness_with_decay": "Prize dengan decay", "fitness_without_decay": "Prize tanpa decay",
-                      "visited": "node dikunjungi", "mission_time_h": "waktu misi (jam)", "distance_km": "jarak (km)",
-                      "ops_visited": "provinsi ber-data operasional dikunjungi",
-                      "ops_mean_position": "urutan rata-rata provinsi ber-data operasional",
-                      "ops_mean_arrival_h": "waktu tiba rata-rata provinsi ber-data operasional (jam)",
-                      "prize_lost": "Prize hilang (dievaluasi dengan decay)", "prize_lost_pct": "Prize hilang (%)"}
-ABLATION_ORDER_ID = {"province": "provinsi", "risk": "Risiko", "ops": "keparahan operasional (ops)",
-                     "position_decay": "urutan (dengan decay)", "arrival_decay_h": "tiba (dengan decay, jam)",
-                     "position_static": "urutan (tanpa decay)", "arrival_static_h": "tiba (tanpa decay, jam)",
-                     "position_shift": "pergeseran urutan (tanpa - dengan)"}
-CASE_STUDY_ID = {"order": "urutan", "province": "provinsi", "status": "status", "risk": "Risiko",
-                 "ops": "keparahan operasional (ops)", "leg_km": "jarak dari node sebelumnya (km)",
-                 "arrival_h": "tiba (jam)", "departure_h": "berangkat (jam)", "prize": "Prize"}
-ABLATION_SEEDS_ID = {"algorithm": "algoritma", "seeds": "jumlah seed",
-                     "decay_route_with_decay_mean": "Prize rute dengan decay (rata-rata)",
-                     "static_route_with_decay_mean": "Prize rute tanpa decay, dievaluasi dengan decay (rata-rata)",
-                     "prize_lost_mean": "Prize hilang rata-rata", "prize_lost_mean_pct": "Prize hilang rata-rata (%)",
-                     "prize_lost_max_pct": "Prize hilang maks (%)",
-                     "seeds_static_worse": "seed dengan rute tanpa decay lebih buruk"}
-
-
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Eksperimen perbandingan utama")
     ap.add_argument("--config", default=str(ROOT / "config.yaml"))
@@ -173,7 +117,7 @@ def main(argv=None):
                     help="hanya fase FIRMS; hasil provinsi dibaca dari <out>/raw/runs.csv bila ada")
     args = ap.parse_args(argv)
     t_start = time.perf_counter()
-    cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf8"))
+    cfg = load_config(args.config)
     out = Path(args.out)
     for sub in ["raw", "tables", "routes", "figures", "logs"]: (out / sub).mkdir(parents=True, exist_ok=True)
     log_name = "firms.log" if args.firms_only else "run_all.log"
@@ -188,7 +132,7 @@ def main(argv=None):
 
 
 def _run(cfg, args, out, t_start):
-    coords = pd.read_csv(ROOT / "data" / "external" / "province_coords.csv")
+    coords = province_coords()
     if args.firms_only:
         prov_csv = out / "raw" / "runs.csv"
         runs = pd.read_csv(prov_csv) if prov_csv.exists() else None
@@ -196,8 +140,7 @@ def _run(cfg, args, out, t_start):
     else:
         runs = _run_province(cfg, args, out, coords)
     if args.firms or args.firms_only:
-        firms_phase.run(cfg, args.quick, args.workers, out, ROOT, coords, runs, log, write_table,
-                                     HEURISTICS)
+        firms_phase.run(cfg, out, coords, runs, quick=args.quick, workers=args.workers)
     if not args.quick and out.resolve() == (ROOT / "results").resolve():
         from src import docs_gen  # AUTO blocks (daftar gambar, ringkasan) of README/docs from results/
         docs_gen.main([])
@@ -205,14 +148,13 @@ def _run(cfg, args, out, t_start):
 
 
 def _run_province(cfg, args, out, coords):
-    w = cfg["weights"]
-    features = prepare(weights=(w["hist"], w["cur"], w["ops"]), gamma=cfg["gamma"])[0]
+    features = province_features(cfg)
     tasks = plan(cfg, args.quick)
     log.info("Mode: %s; %d run; %d worker; Batas waktu misi %s jam untuk semua instance",
              "cepat" if args.quick else "penuh", len(tasks), args.workers, cfg["time_limit_hours"])
     instance_rows = []
     for scenario, n in dict.fromkeys((t[0], t[1]) for t in tasks):
-        inst = make_instance(features, coords, cfg, n, scenario)
+        inst = province_instance(cfg, features, coords, n, scenario)
         g = SOLVERS["Greedy"](inst)
         all_fit = len(g["best_route"]["route"]) == n - 1
         instance_rows.append({"scenario": scenario, "n": n, "budget": budget_for(n, cfg, args.quick),
@@ -269,8 +211,8 @@ def _run_province(cfg, args, out, coords):
     g = sens_runs[sens_runs.parameter == "decay_g0"]
     decay_runs, static_runs = g[g.value == cfg["decay_g0"]], g[g.value == 0]
     sn, ssc = int(decay_runs.n.iloc[0]), str(decay_runs.scenario.iloc[0])
-    decay_inst = make_instance(features, coords, cfg, sn, ssc)
-    static_inst = make_instance(features, coords, cfg, sn, ssc, (("decay_g0", 0.),))
+    decay_inst = province_instance(cfg, features, coords, sn, ssc)
+    static_inst = province_instance(cfg, features, coords, sn, ssc, (("decay_g0", 0.),))
     bd, bs = decay_runs.loc[decay_runs.fitness.idxmax()], static_runs.loc[static_runs.fitness.idxmax()]
     abl_routes, abl_order = analysis.decay_ablation(
         decay_inst, static_inst, json.loads(bd.best_perm), json.loads(bs.best_perm),
@@ -288,7 +230,7 @@ def _run_province(cfg, args, out, coords):
         (out / "routes" / f"best_route_{scenario}_n{n}.json").write_text(
             json.dumps(detail, indent=2, ensure_ascii=False), encoding="utf8")
         if (scenario, n) == (str(cfg["analysis"]["case_study"]["scenario"]), analysis_n(cfg, args.quick, "case_study")):
-            inst = make_instance(features, coords, cfg, int(n), scenario)
+            inst = province_instance(cfg, features, coords, int(n), scenario)
             title = f"Studi kasus: rute terbaik skenario {scenario}, n={n} ({row.algorithm}, seed {row.seed})"
             plots.route_map(coords, inst, results[idx][2], title, out / "figures" / "best_route_map.png")
             cs = analysis.case_study_table(inst, results[idx][2])

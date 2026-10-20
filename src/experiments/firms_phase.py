@@ -8,20 +8,27 @@ firms_cluster_map_k*}.png and routes/best_route_firms_k*.json. Skipped cleanly i
 """
 import gzip
 import json
+import logging
 import time
 from multiprocessing import Pool
 from pathlib import Path
+from typing import NamedTuple
 import numpy as np
 import pandas as pd
 from src.algorithms import SOLVERS
 from src.algorithms.common import all_moves
 from src.calibration import calibrate_time_limit
+from src.config import cluster_mission_params
+from src.data_prep import ROOT
 from src.experiments import plots
-from src.experiments.records import run_record
-from src.experiments.stats import evals_to_fraction, scalability_table, summary_table, wilcoxon_holm_table
+from src.experiments.records import HEURISTICS, run_record
+from src.experiments.reporting import (FIRMS_CALIBRATION_ID, FIRMS_CLUSTERS_ID, FIRMS_INSTANCES_ID, HC_COST_ID,
+                                       SCALABILITY_COMBINED_ID, SUMMARY_ID, WILCOXON_ID, write_table)
+from src.experiments.stats import scalability_table, summary_table, wilcoxon_holm_table
 from src.firms import build_firms_instance, load_hotspots
 
 FAMILY = "FIRMS"
+log = logging.getLogger("run_all.firms")  # handlers of the run_all logger (log file + console)
 _instances = {}
 
 
@@ -38,17 +45,26 @@ def run_one(task):
     return row, hist, route, perm
 
 
-def snapshot_path(cfg, root):
+def snapshot_path(cfg, root=ROOT):
     p = Path(cfg["firms"]["snapshot"])
     return p if p.is_absolute() else Path(root) / p
+
+
+class FirmsSettings(NamedTuple):
+    sizes: list         # k values (Klaster hotspot per instance)
+    seeds: int
+    budget: int         # evaluation budget per run
+    calibration_k: int  # k of the instance the Batas waktu misi is calibrated on
+    map_k: int          # k of the instance drawn on the cluster map
 
 
 def settings(cfg, quick):
     f = cfg["firms"]
     if quick:
         q = f["quick"]; sizes = list(q["sizes"])
-        return sizes, int(q["seeds"]), int(q["budget"]), max(sizes), max(sizes)
-    return list(f["sizes"]), int(cfg["seeds"]), int(f["budget"]), int(f["calibration_k"]), int(f["map_k"])
+        return FirmsSettings(sizes, int(q["seeds"]), int(q["budget"]), max(sizes), max(sizes))
+    return FirmsSettings(list(f["sizes"]), int(cfg["seeds"]), int(f["budget"]), int(f["calibration_k"]),
+                         int(f["map_k"]))
 
 
 def depot_of(cfg, coords):
@@ -60,9 +76,8 @@ def build_all(cfg, hotspots, depot, sizes, calibration_k):
     """Instances per k with one calibrated Batas waktu misi; returns (instances, nodes, calibration)."""
     def make(k, T):
         return build_firms_instance(hotspots, k, depot=depot, seed=int(cfg["firms"]["kmeans_seed"]),
-                                    speed=cfg["speed_kmh"], detour=cfg["detour_factor"], dwell=cfg["dwell_hours"],
-                                    time_limit=T, g0=cfg["decay_g0"])
-    cal = calibrate_time_limit(make(calibration_k, 72.)[0])
+                                    **cluster_mission_params(cfg, T))
+    cal = calibrate_time_limit(make(calibration_k, float(cfg["time_limit_hours"]))[0])  # T replaced per candidate
     T = float(cal["time_limit"]); instances, nodes = {}, {}
     for k in sizes: instances[k], nodes[k] = make(k, T)
     return instances, nodes, cal
@@ -182,9 +197,11 @@ def combined_scalability(province_runs, firms_runs, algorithms):
     return t
 
 
-def run(cfg, quick, workers, out, root, coords, province_runs, log, write_table, heuristics):
-    """Runs the FIRMS phase; returns False (after logging) if the snapshot is missing."""
-    path = snapshot_path(cfg, root)
+def run(cfg, out, coords, province_runs, quick=False, workers=1):
+    """Runs the FIRMS phase into out/; returns False (after logging) if the snapshot is missing.
+
+    coords are the province coordinates (the Depot); province_runs (or None) are compared against."""
+    path = snapshot_path(cfg)
     if not path.exists():
         log.warning("Snapshot FIRMS tidak ditemukan (%s); fase FIRMS dilewati.", path)
         return False
@@ -199,10 +216,8 @@ def run(cfg, quick, workers, out, root, coords, province_runs, log, write_table,
     T = float(cal["time_limit"])
     log.info("Batas waktu misi FIRMS: %g jam (greedy k=%d mengunjungi %.0f%% klaster, %s)", T, cal_k,
              100 * cal["visited_fraction"], "dalam target" if cal["in_target"] else "TIDAK dalam target; terdekat")
-    write_table(cal["table"], out / "tables" / "firms_calibration",
-                {"time_limit_h": "Batas waktu misi (jam)", "visited": "klaster terkunjungi Greedy",
-                 "visited_fraction": "fraksi terkunjungi"})
-    tasks = [(k, a, s, budget) for k in sizes for s in range(seeds) for a in heuristics]
+    write_table(cal["table"], out / "tables" / "firms_calibration", FIRMS_CALIBRATION_ID)
+    tasks = [(k, a, s, budget) for k in sizes for s in range(seeds) for a in HEURISTICS]
     log.info("FIRMS: %d run (k=%s, %d seed, budget %d), %d worker", len(tasks), sizes, seeds, budget, workers)
     t0 = time.perf_counter()
     if workers > 1:
@@ -218,7 +233,7 @@ def run(cfg, quick, workers, out, root, coords, province_runs, log, write_table,
         for r in results: fh.write(json.dumps(r[1]) + "\n")
     for k in sizes:
         log.info("FIRMS k=%d: runtime rata-rata %s", k, ", ".join(
-            f"{a} {runs[(runs.k == k) & (runs.algorithm == a)].runtime_s.mean():.2f} s" for a in heuristics))
+            f"{a} {runs[(runs.k == k) & (runs.algorithm == a)].runtime_s.mean():.2f} s" for a in HEURISTICS))
 
     inst_rows = []
     for k in sizes:
@@ -228,40 +243,26 @@ def run(cfg, quick, workers, out, root, coords, province_runs, log, write_table,
                           "time_limit_h": T, "greedy_visited": len(g["route"]),
                           "greedy_visited_fraction": len(g["route"]) / k,
                           "greedy_mission_time_h": g["mission_time_h"], "g0": cfg["decay_g0"]})
-        write_table(nodes[k], out / "tables" / f"firms_clusters_k{k}",
-                    {"name": "klaster", "lat": "lintang", "lon": "bujur", "hotspots": "jumlah hotspot",
-                     "frp_sum": "Σ FRP (MW)", "region": "wilayah", "risk": "Risiko"})
-    write_table(pd.DataFrame(inst_rows), out / "tables" / "firms_instances",
-                {"hotspots": "hotspot", "frp_total": "Σ FRP total (MW)", "budget": "budget evaluasi",
-                 "time_limit_h": "Batas waktu misi (jam)", "greedy_visited": "terkunjungi Greedy",
-                 "greedy_visited_fraction": "fraksi terkunjungi Greedy",
-                 "greedy_mission_time_h": "waktu misi Greedy (jam)"})
-    from src.experiments.run_all import SCALABILITY_ID, SUMMARY_ID, WILCOXON_ID
-    fsum = summary_table(runs); fw = wilcoxon_holm_table(runs, list(heuristics))
+        write_table(nodes[k], out / "tables" / f"firms_clusters_k{k}", FIRMS_CLUSTERS_ID)
+    write_table(pd.DataFrame(inst_rows), out / "tables" / "firms_instances", FIRMS_INSTANCES_ID)
+    fsum = summary_table(runs); fw = wilcoxon_holm_table(runs, list(HEURISTICS))
     write_table(fsum.assign(k=fsum.n - 1), out / "tables" / "firms_summary", SUMMARY_ID)
     write_table(fw.assign(k=fw.n - 1), out / "tables" / "firms_wilcoxon_holm", WILCOXON_ID)
-    plots.boxplot_fitness_firms(runs, list(heuristics), out / "figures" / "firms_boxplot_fitness.png")
+    plots.boxplot_fitness_firms(runs, list(HEURISTICS), out / "figures" / "firms_boxplot_fitness.png")
 
-    prov = province_runs[province_runs.algorithm.isin(heuristics)] if province_runs is not None else None
+    prov = province_runs[province_runs.algorithm.isin(HEURISTICS)] if province_runs is not None else None
     hc = hc_cost_table(runs, prov)
-    write_table(hc, out / "tables" / "firms_hc_cost",
-                {"instance_family": "jenis instance", "scenario": "skenario", "candidates": "node kandidat",
-                 "neighbourhood_size": "ukuran neighbourhood HC", "budget": "budget evaluasi",
-                 "budget_per_neighbourhood": "budget / neighbourhood (langkah penuh maks.)",
-                 "hc_restarts_mean": "restart HC rata-rata", "hc_steps_mean": "langkah naik HC rata-rata",
-                 "hc_single_start_mean": "fitness HC single-start rata-rata", "hc_fitness_mean": "fitness HC rata-rata",
-                 "hc_us_per_eval": "HC µs/evaluasi", "sa_us_per_eval": "SA µs/evaluasi", "ga_us_per_eval": "GA µs/evaluasi"})
+    write_table(hc, out / "tables" / "firms_hc_cost", HC_COST_ID)
 
     psum = summary_table(prov) if prov is not None and not prov.empty else None
-    pw = wilcoxon_holm_table(prov, list(heuristics)) if psum is not None else None
+    pw = wilcoxon_holm_table(prov, list(HEURISTICS)) if psum is not None else None
     md, table = ranking_report(psum, pw, fsum, fw, sizes)
     table.to_csv(out / "tables" / "firms_ranking.csv", index=False)
     (out / "tables" / "firms_ranking.md").write_text(md, encoding="utf8")
 
-    comb = combined_scalability(province_runs, runs, heuristics)  # Exact ikut menentukan best-known provinsi
-    write_table(comb, out / "tables" / "scalability_combined",
-                {**SCALABILITY_ID, "instance_family": "jenis instance", "candidates": "node kandidat"})
-    plots.scalability_combined(comb, list(heuristics), out / "figures" / "scalability_combined.png")
+    comb = combined_scalability(province_runs, runs, HEURISTICS)  # Exact ikut menentukan best-known provinsi
+    write_table(comb, out / "tables" / "scalability_combined", SCALABILITY_COMBINED_ID)
+    plots.scalability_combined(comb, list(HEURISTICS), out / "figures" / "scalability_combined.png")
 
     for k in sizes:
         grp = runs[runs.k == k]; idx = grp.fitness.idxmax(); row = runs.loc[idx]

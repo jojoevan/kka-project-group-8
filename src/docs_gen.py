@@ -6,6 +6,7 @@ is replaced by the output of the generator for ``key``. Text outside the markers
 import re
 from pathlib import Path
 import pandas as pd
+from src.experiments.records import HEURISTICS
 
 _BLOCK = re.compile(r"(<!-- AUTO:([\w-]+) -->\n)(.*?)(<!-- /AUTO:\2 -->)", re.S)
 
@@ -101,7 +102,6 @@ def provenance_table(cfg):
     return _md_table(["parameter", "nilai", "sumber", "status"], rows)
 
 
-HEURISTICS = ("Greedy", "HC", "SA", "GA")
 _TIE = 1e-9
 
 
@@ -195,13 +195,13 @@ CAPTIONS = {
     "figures/scalability_combined.png": "Skalabilitas gabungan: runtime per run (log) dan kualitas (% best-known) "
                                         "terhadap jumlah node kandidat, instance provinsi skenario 2026 (garis "
                                         "penuh) dan instance FIRMS k=50/100/200 (garis putus-putus, area berlabel).",
-    "figures/firms_cluster_map_k100.png": "Peta hotspot VIIRS dan 100 Klaster hotspot (warna = Risiko) dengan rute "
+    "figures/firms_cluster_map_k100.png": "Peta hotspot VIIRS dan 100 Klaster hotspot (warna = Risiko klaster) dengan rute "
                                           "terbaik, nomor urut, Node dilewati, dan Depot Pekanbaru.",
     "figures/firms_boxplot_fitness.png": "Sebaran fitness akhir 30 seed per algoritma untuk setiap k instance FIRMS.",
     "tables/firms_calibration.md": "Kalibrasi Batas waktu misi FIRMS: node terkunjungi Greedy pada k=100 untuk "
                                    "setiap kandidat batas waktu.",
     **{f"tables/firms_clusters_k{k}.md": f"Daftar {k} Klaster hotspot: lokasi, wilayah, jumlah hotspot, Σ FRP, dan "
-                                         "Risiko." for k in (50, 100, 200)},
+                                         "Risiko klaster." for k in (50, 100, 200)},
     "tables/firms_hc_cost.md": "Biaya Steepest-Ascent HC: ukuran neighbourhood O(n²) terhadap budget evaluasi, "
                                "restart dan langkah naik HC, serta µs per evaluasi, untuk instance provinsi dan "
                                "FIRMS.",
